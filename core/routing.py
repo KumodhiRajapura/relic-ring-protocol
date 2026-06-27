@@ -9,7 +9,6 @@ Radians = float
 
 
 class CodexTranscoder:
-   
     @staticmethod
     def _int_to_base_n(n: int, base: int) -> str:
         if n == 0:
@@ -18,19 +17,17 @@ class CodexTranscoder:
         while n:
             digits.append(int(n % base))
             n //= base
-        chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"              
+        chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         return "".join(chars[d] for d in reversed(digits))
 
     @classmethod
     def encode_payload_for_planet(cls, text_payload: str, target_base: int) -> str:
-      
         if target_base == 10:
             return " ".join(str(ord(char)) for char in text_payload)
         
         encoded_tokens = []
         for char in text_payload:
-            ascii_val = ord(char)
-            encoded_tokens.append(cls._int_to_base_n(ascii_val, target_base))
+            encoded_tokens.append(cls._int_to_base_n(ord(char), target_base))
         return " ".join(encoded_tokens)
 
 
@@ -40,19 +37,16 @@ class RoutingEngine:
         self.planets = planets
         self.metadata = metadata
 
-        # Ingest configuration rules
-        self.c: float = float(metadata.get("speed_of_light", 300000.0))
-        self.l_max: float = float(metadata.get("Lmax", 50000000.0))
-        self.tower_delay: float = float(metadata.get("tower_delay", 7.0))
-        self.scale_unit: float = float(metadata.get("coordinate_scale_unit_km", 100000.0))
-        self.fiber_fraction: float = float(metadata.get("fiber_speed_fraction", 0.67))
+        self.c: float = float(metadata["speed_of_light_kms"])
+        self.l_max: float = float(metadata["max_void_hop_distance_km"])
+        self.tower_delay: float = float(metadata["tower_processing_delay_ms"])
+        self.scale_unit: float = float(metadata["coordinate_scale_unit_km"])
+        self.fiber_fraction: float = float(metadata["fiber_speed_fraction"])
 
-        # Compile sparse static structural graph map
         self._static_topology: Dict[PlanetId, Dict[PlanetId, Milliseconds]] = {}
         self._precompute_network_topology()
 
     def _precompute_network_topology(self) -> None:
-
         for p1_id in self.planets:
             self._static_topology[p1_id] = {}
             for p2_id in self.planets:
@@ -64,17 +58,22 @@ class RoutingEngine:
 
     def _compute_raw_hop_latency(self, p1_id: PlanetId, p2_id: PlanetId) -> Optional[Milliseconds]:
         p1, p2 = self.planets[p1_id], self.planets[p2_id]
+        
         dx = (p2["x"] - p1["x"]) * self.scale_unit
         dy = (p2["y"] - p1["y"]) * self.scale_unit
         center_dist = math.sqrt(dx * dx + dy * dy)
 
-        L = center_dist - (p1["radius_km"] + p1["atmosphere_thickness_km"]) - (p2["radius_km"] + p2["atmosphere_thickness_km"])
+        boundary_1 = p1["radius_km"] + p1["atmosphere_thickness_km"]
+        boundary_2 = p2["radius_km"] + p2["atmosphere_thickness_km"]
+        L = center_dist - boundary_1 - boundary_2
+
         if L > self.l_max or L < 0:
             return None
 
         t_void = (L / self.c) * 1000.0
         t_atmo1 = (p1["atmosphere_thickness_km"] / (self.c / p1["refraction_index"])) * 1000.0
         t_atmo2 = (p2["atmosphere_thickness_km"] / (self.c / p2["refraction_index"])) * 1000.0
+        
         return t_void + t_atmo1 + t_atmo2
 
     def _get_tower_angle(self, tower_idx: int, total_towers: int) -> Radians:
@@ -84,7 +83,8 @@ class RoutingEngine:
         p = self.planets[planet_id]
         delta_theta = abs(in_angle - out_angle)
         shortest_angle = min(delta_theta, 2.0 * math.pi - delta_theta)
-        return ((p["radius_km"] * shortest_angle) / (self.c * self.fiber_fraction)) * 1000.0
+        arc_length = p["radius_km"] * shortest_angle
+        return (arc_length / (self.c * self.fiber_fraction)) * 1000.0
 
     def _get_optimal_tower_alignment(self, src_id: PlanetId, dst_id: PlanetId) -> Tuple[int, int, Radians, Radians]:
         p1, p2 = self.planets[src_id], self.planets[dst_id]
@@ -101,6 +101,7 @@ class RoutingEngine:
                 a2 = self._get_tower_angle(t2, p2["active_towers"])
                 t2_x = p2_x + p2["radius_km"] * math.cos(a2)
                 t2_y = p2_y + p2["radius_km"] * math.sin(a2)
+                
                 d = (t2_x - t1_x)**2 + (t2_y - t1_y)**2
                 if d < min_dist:
                     min_dist = d
@@ -116,6 +117,7 @@ class RoutingEngine:
         for i in range(len(path) - 1):
             curr_node, next_node = path[i], path[i+1]
             t_send, t_recv, a_send, a_recv = self._get_optimal_tower_alignment(curr_node, next_node)
+            
             fiber_transit_ms = 0.0
             if i > 0 and last_ingress_angle is not None:
                 fiber_transit_ms = self._calculate_fiber_delay(curr_node, last_ingress_angle, a_send)
@@ -169,7 +171,7 @@ class RoutingEngine:
                     previous[neighbor] = curr_node
                     heapq.heappush(pq, (tentative_cost, neighbor))
 
-        return self._build_packet_schema(origin, destination, distances, previous)
+        return self._build_packet_schema(origin, destination, distances, previous, raw_message="")
 
     def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
         p1, p2 = self.planets[current_id], self.planets[target_id]
@@ -177,11 +179,11 @@ class RoutingEngine:
 
     def find_route_astar(self, origin: PlanetId, destination: PlanetId, 
                            active_planets: Set[PlanetId], 
-                           disabled_links: Set[LinkId] = None) -> Optional[Dict[str, Any]]:
+                           disabled_links: Set[LinkId],
+                           raw_message: str) -> Optional[Dict[str, Any]]:
         if origin not in active_planets or destination not in active_planets:
             return None
         
-        links_to_ignore = disabled_links if disabled_links else set()
         g_score: Dict[PlanetId, float] = {node: float("inf") for node in active_planets}
         previous: Dict[PlanetId, Optional[PlanetId]] = {node: None for node in active_planets}
         
@@ -200,8 +202,9 @@ class RoutingEngine:
             for neighbor, edge_latency in neighbors.items():
                 if neighbor not in active_planets:
                     continue
-                if (curr_node, neighbor) in links_to_ignore or (neighbor, curr_node) in links_to_ignore:
+                if (curr_node, neighbor) in disabled_links or (neighbor, curr_node) in disabled_links:
                     continue
+
 
                 tentative_g = g_score[curr_node] + edge_latency + self.tower_delay
                 if tentative_g < g_score[neighbor]:
@@ -211,12 +214,12 @@ class RoutingEngine:
                     enqueued_f[neighbor] = f_score
                     heapq.heappush(pq, (f_score, neighbor))
 
-        return self._build_packet_schema(origin, destination, g_score, previous)
+        return self._build_packet_schema(origin, destination, g_score, previous, raw_message="")
 
     # PACKET GENERATION & DIALECT OUTPUT 
     def _build_packet_schema(self, origin: PlanetId, destination: PlanetId, 
-                             costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
-                             raw_message: str) -> Optional[Dict[str, Any]]:
+                         costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
+                         raw_message: str = "") -> Optional[Dict[str, Any]]:
 
         path: List[PlanetId] = []
         step: Optional[PlanetId] = destination
@@ -227,21 +230,22 @@ class RoutingEngine:
         if not path or path[0] != origin:
             return None
 
-        final_latency = costs[destination] + self.tower_delay
-        hop_log_data = self.reconstruct_hop_logs(path)
-
-        # Transcode the dynamic user message into the destination's distinct number base 
-        dest_node_data = self.planets[destination]
-        translated_payload = CodexTranscoder.encode_payload_for_planet(raw_message, dest_node_data["codex"])
+        final_latency = g_score[destination] + self.tower_delay
+        translated_payload = CodexTranscoder.encode_payload_for_planet(raw_message, self.planets[destination]["codex"])
 
         return {
             "origin_id": origin,
             "destination_id": destination,
-            "current_id": destination,           # Terminal node delivery state
-            "payload": translated_payload,       # Transcoded Base-N dialect string 
+            "current_id": destination,
+            "payload": translated_payload,
             "meta_telemetry": {
                 "total_latency_ms": round(final_latency, 4),
                 "route_taken": path
             },
-            "hop_log": hop_log_data
+            "hop_log": self.reconstruct_hop_logs(path)
         }
+
+    def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
+        p1, p2 = self.planets[current_id], self.planets[target_id]
+        dist = math.sqrt(((p2["x"] - p1["x"]) * self.scale_unit)**2 + ((p2["y"] - p1["y"]) * self.scale_unit)**2)
+        return (dist / self.c) * 1000.0
