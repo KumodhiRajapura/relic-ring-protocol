@@ -3,44 +3,16 @@ from typing import Any
 
 
 @dataclass
-class HopEntry:
-    hop_index: int
-    tx_planet: str
-    rx_planet: str
-    tx_tower: str
-    rx_tower: str
-    encoded_payload: str
-    internal_fiber_delay_ms: float
-    hop_latency_ms: float
-
-    def to_dict(self) -> dict:
-        return {
-            "hop_index": self.hop_index,
-            "tx_planet": self.tx_planet,
-            "rx_planet": self.rx_planet,
-            "tx_tower": self.tx_tower,
-            "rx_tower": self.rx_tower,
-            "encoded_payload": self.encoded_payload,
-            "internal_fiber_delay_ms": self.internal_fiber_delay_ms,
-            "hop_latency_ms": self.hop_latency_ms
-        }
-
-
-@dataclass
 class Packet:
     origin_id: str
     destination_id: str
     current_id: str
     payload: Any
-    hop_log: list[HopEntry] = field(default_factory=list)
+    hop_log: list[dict] = field(default_factory=list)
     delivered: bool = False
     undeliverable: bool = False
     total_latency_ms: float = 0.0
     route_taken: list[str] = field(default_factory=list)
-
-    def append_hop(self, hop: HopEntry) -> None:
-        self.hop_log.append(hop)
-        self.total_latency_ms += hop.hop_latency_ms
 
     def mark_delivered(self) -> None:
         self.delivered = True
@@ -59,7 +31,7 @@ class Packet:
             "undeliverable": self.undeliverable,
             "total_latency_ms": round(self.total_latency_ms, 4),
             "route_taken": self.route_taken,
-            "hop_log": [h.to_dict() for h in self.hop_log]
+            "hop_log": self.hop_log,
         }
 
     def __repr__(self) -> str:

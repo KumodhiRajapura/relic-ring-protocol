@@ -71,6 +71,10 @@ class RoutingEngine:
         ) / self.c * 1000.0
 
         send_t, recv_t = self._closest_tower_pair(p1_id, p2_id)
+        # Topology precomputation assumes T_0 as both entry and exit point per planet.
+        # This matches the _reconstruct_hop_logs assumption (#5). Precomputed weights
+        # are for Dijkstra/A* cost comparison only — actual arc times are recalculated
+        # with real entry towers in _reconstruct_hop_logs.
         Tp_origin_ms, _, _ = self._fiber_arc_ms(p1_id, 0, send_t)
         Tp_dest_ms, _, _ = self._fiber_arc_ms(p2_id, recv_t, 0)
 
