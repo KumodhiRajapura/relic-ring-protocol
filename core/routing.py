@@ -134,6 +134,49 @@ class RoutingEngine:
             last_ingress_angle = a_recv
         return hop_logs
 
+
+    # HEAP ROUTERS WITH LINK LEVEL FAILURE AWARENESS
+    def find_route_dijkstra(self, origin: PlanetId, destination: PlanetId, 
+                             active_planets: Set[PlanetId], 
+                             disabled_links: Set[LinkId] = None) -> Optional[Dict[str, Any]]:
+        if origin not in active_planets or destination not in active_planets:
+            return None
+        
+        links_to_ignore = disabled_links if disabled_links else set()
+        distances: Dict[PlanetId, float] = {node: float("inf") for node in active_planets}
+        previous: Dict[PlanetId, Optional[PlanetId]] = {node: None for node in active_planets}
+        
+        distances[origin] = 0.0
+        pq: List[Tuple[float, PlanetId]] = [(0.0, origin)]
+
+        while pq:
+            curr_dist, curr_node = heapq.heappop(pq)
+            if curr_dist > distances[curr_node]:
+                continue
+            if curr_node == destination:
+                break
+
+            neighbors = self._static_topology.get(curr_node, {})
+            for neighbor, edge_latency in neighbors.items():
+                # Rule 1: Node Failure Chaos Check
+                if neighbor not in active_planets:
+                    continue
+                # Rule 2: Fine-Grained Link Failure Chaos Check
+                if (curr_node, neighbor) in links_to_ignore or (neighbor, curr_node) in links_to_ignore:
+                    continue
+
+                tentative_cost = curr_dist + edge_latency + self.tower_delay
+                if tentative_cost < distances[neighbor]:
+                    distances[neighbor] = tentative_cost
+                    previous[neighbor] = curr_node
+                    heapq.heappush(pq, (tentative_cost, neighbor))
+
+        return self._build_packet_schema(origin, destination, distances, previous, raw_message="")
+
+    def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
+        p1, p2 = self.planets[current_id], self.planets[target_id]
+        return (math.sqrt(((p2["x"] - p1["x"])*self.scale_unit)**2 + ((p2["y"] - p1["y"])*self.scale_unit)**2) / self.c) * 1000.0
+
     def find_route_astar(self, origin: PlanetId, destination: PlanetId, 
                            active_planets: Set[PlanetId], 
                            disabled_links: Set[LinkId],
@@ -170,6 +213,13 @@ class RoutingEngine:
                     f_score = tentative_g + self._heuristic(neighbor, destination)
                     enqueued_f[neighbor] = f_score
                     heapq.heappush(pq, (f_score, neighbor))
+
+        return self._build_packet_schema(origin, destination, g_score, previous, raw_message="")
+
+    # PACKET GENERATION & DIALECT OUTPUT 
+    def _build_packet_schema(self, origin: PlanetId, destination: PlanetId, 
+                         costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
+                         raw_message: str = "") -> Optional[Dict[str, Any]]:
 
         path: List[PlanetId] = []
         step: Optional[PlanetId] = destination
