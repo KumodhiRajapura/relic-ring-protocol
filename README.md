@@ -89,6 +89,43 @@ All physical constants are read from `universe-config.json` under `universe_meta
 
 ## Core Modules
 
+## Architecture
+
+```
+                    ┌─────────────────────────────────┐
+                    │         universe-config.json     │
+                    └────────────────┬────────────────┘
+                                     │
+                    ┌────────────────▼────────────────┐
+                    │           universe.py            │
+                    │   Planet · Tower · Universe      │
+                    └──────┬─────────────┬────────────┘
+                           │             │
+           ┌───────────────▼──┐    ┌─────▼──────────────┐
+           │    latency.py    │    │    encoder.py       │
+           │  Tv · Tp · Fiber │    │  ASCII ↔ Codex      │
+           └───────────────┬──┘    └─────┬───────────────┘
+                           │             │
+                    ┌──────▼─────────────▼──────────┐
+                    │          routing.py             │
+                    │     A* · Dijkstra · HopLog      │
+                    └──────────────┬─────────────────┘
+                                   │
+                    ┌──────────────▼─────────────────┐
+                    │          network.py             │
+                    │   Kill · Revive · Orchestrate   │
+                    └──────┬───────────────┬──────────┘
+                           │               │
+              ┌────────────▼──┐    ┌───────▼────────────┐
+              │    main.py    │    │     api/app.py      │
+              │  Terminal UI  │    │    Flask REST API   │
+              └───────────────┘    └────────┬────────────┘
+                                            │
+                                   ┌────────▼────────────┐
+                                   │  relic-ring.html    │
+                                   │   Web UI Star Map   │
+                                   └─────────────────────┘
+```
 ### universe.py
 
 Loads `universe-config.json` and constructs all planetary objects. Validates config at load time — catches missing fields, duplicate IDs, invalid codex values, and insufficient tower counts.

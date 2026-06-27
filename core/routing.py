@@ -87,7 +87,8 @@ class RoutingEngine:
     def _tower_position(self, planet_id: PlanetId, tower_idx: int) -> Tuple[float, float]:
         p = self.planets[planet_id]
         a = self._tower_angle(tower_idx, p.active_towers)
-        return p.x + p.radius_km * math.cos(a), p.y + p.radius_km * math.sin(a)
+        surface = p.radius_km + p.atmosphere_thickness_km
+        return p.x + surface * math.cos(a), p.y + surface * math.sin(a)
 
     def _closest_tower_pair(self, src_id: PlanetId, dst_id: PlanetId) -> Tuple[int, int]:
         p1, p2 = self.planets[src_id], self.planets[dst_id]
