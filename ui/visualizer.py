@@ -1,7 +1,3 @@
-"""
-Relic Ring Protocol — Terminal Visualizer
-Renders the star system, routes, and transmission logs in the terminal.
-"""
 import math
 import os
 import sys
@@ -197,20 +193,37 @@ def print_topology_table(planets: list, topology: dict):
     print()
 
 
-def print_packet_result(result: dict, raw_message: str):
+def print_packet_result(result, raw_message: str):
     """Pretty-print a full packet transmission result."""
     if not result:
         print(red("\n  ✗ TRANSMISSION FAILED — No valid route found."))
         return
 
-    meta = result["meta_telemetry"]
-    hops = result["hop_log"]
-    route = meta["route_taken"]
+    # Handle both dict and Packet object inputs
+    if isinstance(result, dict):
+        meta = result["meta_telemetry"]
+        hops = result["hop_log"]
+        route = meta["route_taken"]
+        origin_id = result['origin_id']
+        destination_id = result['destination_id']
+        payload = result['payload']
+    else:
+        # It's a Packet object
+        meta = {
+            'hop_count': len(result.hop_log),
+            'total_latency_ms': result.total_latency_ms,
+            'route_taken': result.route_taken
+        }
+        hops = result.hop_log
+        route = result.route_taken
+        origin_id = result.origin_id
+        destination_id = result.destination_id
+        payload = result.payload
 
     print()
     print(bold(green("┌─── PACKET DELIVERED ────────────────────────────────────────────┐")))
-    print(f"  {bold('Origin')}      : {bright_cyan(result['origin_id'])}")
-    print(f"  {bold('Destination')}: {bright_cyan(result['destination_id'])}")
+    print(f"  {bold('Origin')}      : {bright_cyan(origin_id)}")
+    print(f"  {bold('Destination')}: {bright_cyan(destination_id)}")
     print(f"  {bold('Message')}     : {bright_yellow(repr(raw_message))}")
     route_str = " → ".join(bright_cyan(p) for p in route)
     print(f"  {bold('Route')}       : {route_str}")
@@ -258,7 +271,7 @@ def print_packet_result(result: dict, raw_message: str):
     total_str = bright_green(str(round(meta['total_latency_ms'], 4)) + " ms")
     print(f"  {bold('TOTAL')}       : {total_str}")
     print()
-    print(f"  Final payload at {bright_cyan(result['destination_id'])} : {bright_yellow(result['payload'])}")
+    print(f"  Final payload at {bright_cyan(destination_id)} : {bright_yellow(payload)}")
     print(bold(green("└─────────────────────────────────────────────────────────────────┘")))
     print()
 
