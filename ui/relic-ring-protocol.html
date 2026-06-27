@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relic Ring Protocol — Zeta-26 Command Center</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Orbitron:wght@400;600;700;900&display=swap');
+
+:root {
+  --bg:       #0B1020;
+  --surface:  #111827;
+  --card:     #1E293B;
+  --border:   #334155;
+  --cyan:     #22D3EE;
+  --purple:   #8B5CF6;
+  --green:    #22C55E;
+  --amber:    #F59E0B;
+  --red:      #EF4444;
+  --text:     #F8FAFC;
+  --muted:    #94A3B8;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Starfield */
+#starfield {
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(139,92,246,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(34,211,238,0.05) 0%, transparent 50%);
+}
+
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+
+/* HEADER */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  height: 54px;
+  display: flex; align-items: center; gap: 16px;
+  flex-shrink: 0;
+}
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900; font-size: 14px;
+  color: var(--cyan);
+  letter-spacing: 0.12em;
+  text-shadow: 0 0 20px rgba(34,211,238,0.5);
+}
+.logo span { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 8px; }
+.header-stats { margin-left: auto; display: flex; gap: 24px; }
+.hstat { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+.hstat b { color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 13px; }
+.dot-live { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 8px var(--green); animation: blink 2s infinite; }
+@keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
+
+/* MAIN GRID */
+.main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 300px 280px;
+  grid-template-rows: 1fr auto auto;
+  gap: 0;
+  min-height: 0;
+}
+
+.panel {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.panel:last-of-type { border-right: none; }
+
+.panel-hdr {
+  padding: 8px 14px;
+  background: rgba(17,24,39,0.8);
+  border-bottom: 1px solid var(--border);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px; font-weight: 600;
+  letter-spacing: 0.2em; color: var(--muted);
+  text-transform: uppercase;
+  display: flex; align-items: center; gap: 8px;
+  flex-shrink: 0;
+}
+.panel-hdr .accent { color: var(--cyan); }
+
+.panel-body { flex: 1; overflow: auto; padding: 12px; }
+.panel-body::-webkit-scrollbar { width: 3px; }
+.panel-body::-webkit-scrollbar-thumb { background: var(--border); }
+
+/* MAP PANEL */
+#map-panel { grid-column: 1; grid-row: 1 / 3; border-right: 1px solid var(--border); border-bottom: none; }
+#universe-svg { width: 100%; height: 100%; display: block; }
+
+/* PLANET INSPECTOR */
+#inspector-panel { grid-column: 2; grid-row: 1; }
+
+/* PACKET SEND */
+#send-panel { grid-column: 3; grid-row: 1; }
+
+/* LATENCY */
+#latency-panel { grid-column: 2; grid-row: 2; }
+
+/* HOP LOG */
+#hoplog-panel { grid-column: 3; grid-row: 2; }
+
+/* BOTTOM ROW */
+.bottom-row {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--border);
+  height: 140px;
+}
+
+/* CODEX PANEL */
+#codex-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+
+/* CHAOS PANEL */
+#chaos-panel { border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+
+/* CONSOLE */
+#console-panel { display: flex; flex-direction: column; }
+
+/* FORM ELEMENTS */
+select, input[type="text"] {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px;
+  padding: 6px 8px; outline: none; border-radius: 4px; appearance: none;
+}
+select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(34,211,238,0.15); }
+.field { margin-bottom: 8px; }
+.field label { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+
+.btn { padding: 7px 12px; font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; cursor: pointer; border: none; border-radius: 4px; text-transform: uppercase; transition: all 0.15s; width: 100%; }
+.btn-cyan { background: var(--cyan); color: #000; }
+.btn-cyan:hover { background: #06B6D4; box-shadow: 0 0 16px rgba(34,211,238,0.4); }
+.btn-red { background: transparent; border: 1px solid var(--red); color: var(--red); }
+.btn-red:hover { background: rgba(239,68,68,0.1); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--cyan); color: var(--cyan); }
+.btn + .btn { margin-top: 5px; }
+
+/* PLANET INFO */
+.planet-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+.planet-card .pname { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+.kv { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.kv .k { color: var(--muted); }
+.kv .v { color: var(--text); font-weight: 700; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 9px; padding: 2px 7px; border-radius: 10px;
+  font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 0.1em;
+}
+.online  { background: rgba(34,197,94,0.15);  border: 1px solid rgba(34,197,94,0.4);  color: var(--green); }
+.offline { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.4);  color: var(--red); }
+.sending { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.4); color: var(--amber); }
+.recv    { background: rgba(34,211,238,0.15); border: 1px solid rgba(34,211,238,0.4); color: var(--cyan); }
+
+/* LATENCY BARS */
+.lat-item { margin-bottom: 8px; }
+.lat-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.lat-label .lk { color: var(--muted); }
+.lat-label .lv { color: var(--text); font-weight: 700; }
+.bar-track { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+.bar-cyan   { background: var(--cyan); }
+.bar-purple { background: var(--purple); }
+.bar-green  { background: var(--green); }
+.bar-amber  { background: var(--amber); }
+
+/* HOP LOG */
+.hop-entry {
+  border-left: 2px solid var(--border); padding-left: 8px; margin-bottom: 8px;
+  font-size: 10px; line-height: 1.6;
+}
+.hop-entry.done { border-left-color: var(--green); }
+.hop-entry .htitle { color: var(--cyan); font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px; }
+.hop-entry .hpayload { color: var(--purple); word-break: break-all; font-size: 9px; margin-top: 2px; }
+
+/* CODEX */
+.codex-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+.codex-label { width: 55px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; padding-top: 1px; flex-shrink: 0; }
+.codex-val { flex: 1; font-size: 10px; color: var(--cyan); word-break: break-all; }
+.codex-arrow { color: var(--border); font-size: 14px; margin: 2px 0 2px 55px; }
+
+/* CONSOLE */
+.console-body { padding: 8px 12px; overflow: auto; height: 100%; }
+.console-body::-webkit-scrollbar { width: 3px; }
+.console-body::-webkit-scrollbar-thumb { background: var(--border); }
+.log-line { font-size: 10px; margin-bottom: 3px; line-height: 1.5; }
+.log-info    { color: var(--muted); }
+.log-info .tag  { color: var(--cyan); }
+.log-success { color: var(--green); }
+.log-error   { color: var(--red); }
+.log-warn    { color: var(--amber); }
+
+/* CHAOS */
+.chaos-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; height: 100%; }
+.chaos-row { display: flex; gap: 6px; }
+.chaos-row .btn { flex: 1; }
+
+/* ROUTE RESULT */
+.route-display { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin-bottom: 8px; }
+.rnode { font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; padding: 3px 8px; background: rgba(34,211,238,0.1); border: 1px solid rgba(34,211,238,0.3); color: var(--cyan); border-radius: 3px; }
+.rnode.src { border-color: var(--green); background: rgba(34,197,94,0.1); color: var(--green); }
+.rnode.dst { border-color: var(--purple); background: rgba(139,92,246,0.1); color: var(--purple); }
+.rarrow { color: var(--border); font-size: 12px; }
+
+.big-lat { font-family: 'Orbitron', sans-serif; font-size: 26px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 20px rgba(34,211,238,0.4); }
+.big-lat-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.15em; }
+
+/* PLANET COLORS */
+.p-Aegis   { color: #60A5FA; } /* blue */
+.p-Boreas  { color: #4ADE80; } /* green */
+.p-Dawn    { color: #FB923C; } /* orange */
+.p-Elysium { color: #A78BFA; } /* purple */
+.p-Fenix   { color: #F87171; } /* red */
+.p-Caelum  { color: #FCD34D; } /* gold */
+
+.empty { text-align: center; padding: 20px; color: var(--muted); font-size: 11px; }
+.empty .ico { font-size: 24px; margin-bottom: 6px; }
+
+/* Inline chaos select */
+.chaos-sel-row { display: flex; gap: 5px; margin-top: 4px; }
+.chaos-sel-row select { flex: 1; }
+.chaos-sel-row .btn { width: auto; padding: 6px 10px; }
+
+/* neighbour list */
+.nbr-list { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.nbr-tag { font-size: 9px; padding: 2px 6px; background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.2); color: var(--cyan); border-radius: 3px; }
+.nbr-tag.dead { border-color: rgba(239,68,68,0.3); color: var(--red); background: rgba(239,68,68,0.08); }
+</style>
+</head>
+<body>
+<canvas id="starfield" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
+
+<div class="app">
+  <!-- HEADER -->
+  <header>
+    <div class="logo">ZETA-26 <span>COMMAND CENTER · RELIC RING PROTOCOL</span></div>
+    <div class="header-stats">
+      <div class="hstat"><span class="dot-live"></span> ONLINE</div>
+      <div class="hstat">PACKETS <b id="hdr-packets">0</b></div>
+      <div class="hstat">AVG LATENCY <b id="hdr-avg">—</b></div>
+      <div class="hstat">PLANETS <b id="hdr-planets">6</b></div>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- MAP -->
+    <div class="panel" id="map-panel">
+      <div class="panel-hdr"><span class="accent">◉</span> UNIVERSE MAP — ZETA-26 STAR SYSTEM</div>
+      <svg id="universe-svg"></svg>
+    </div>
+
+    <!-- PLANET INSPECTOR -->
+    <div class="panel" id="inspector-panel">
+      <div class="panel-hdr"><span class="accent">◈</span> PLANET INSPECTOR</div>
+      <div class="panel-body" id="inspector-body">
+        <div class="empty"><div class="ico">🪐</div>Click a planet on the map to inspect it.</div>
+      </div>
+    </div>
+
+    <!-- SEND PACKET -->
+    <div class="panel" id="send-panel">
+      <div class="panel-hdr"><span class="accent">▶</span> TRANSMIT PACKET</div>
+      <div class="panel-body">
+        <div class="field">
+          <label>Origin</label>
+          <select id="sel-origin"></select>
+        </div>
+        <div class="field">
+          <label>Destination</label>
+          <select id="sel-dest"></select>
+        </div>
+        <div class="field">
+          <label>Message</label>
+          <input type="text" id="inp-msg" value="Hello world" placeholder="Enter message...">
+        </div>
+        <button class="btn btn-cyan" onclick="sendTransmission()">⟶ TRANSMIT</button>
+        <button class="btn btn-ghost" style="margin-top:5px;" onclick="runDemo()">▷ DEMO: Aegis → Caelum</button>
+        <div id="tx-error" style="color:var(--red);font-size:10px;margin-top:6px;display:none;"></div>
+
+        <!-- Result summary inside send panel -->
+        <div id="route-result" style="margin-top:10px; display:none;">
+          <div class="route-display" id="route-display"></div>
+          <div class="big-lat" id="big-lat">—</div>
+          <div class="big-lat-label">TOTAL LATENCY</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LATENCY BREAKDOWN -->
+    <div class="panel" id="latency-panel">
+      <div class="panel-hdr"><span class="accent">⧖</span> LATENCY BREAKDOWN</div>
+      <div class="panel-body" id="latency-body">
+        <div class="empty" style="padding:12px;"><div class="ico" style="font-size:16px;">📊</div>Send a packet to see latency.</div>
+      </div>
+    </div>
+
+    <!-- HOP LOG -->
+    <div class="panel" id="hoplog-panel">
+      <div class="panel-hdr"><span class="accent">↝</span> HOP LOG</div>
+      <div class="panel-body" id="hoplog-body">
+        <div class="empty" style="padding:12px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- CODEX -->
+      <div id="codex-panel">
+        <div class="panel-hdr"><span class="accent">⌬</span> CODEX TRANSLATION</div>
+        <div class="panel-body" id="codex-body" style="padding:8px 12px;">
+          <div class="empty" style="padding:6px;font-size:10px;">Send a packet to see encoding.</div>
+        </div>
+      </div>
+
+      <!-- CHAOS -->
+      <div id="chaos-panel">
+        <div class="panel-hdr"><span class="accent" style="color:var(--red);">⚡</span> CHAOS CONTROLS</div>
+        <div class="chaos-body">
+          <div class="chaos-row">
+            <button class="btn btn-red" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
+            <button class="btn btn-ghost" onclick="showChaos('revive-planet')">↑ REVIVE PLANET</button>
+          </div>
+          <div class="chaos-row">
+            <button class="btn btn-red" onclick="showChaos('kill-link')">✗ SEVER LINK</button>
+            <button class="btn btn-ghost" onclick="showChaos('revive-link')">✓ RESTORE LINK</button>
+          </div>
+          <div id="chaos-sub" style="display:none;">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;" id="chaos-lbl"></div>
+            <div class="chaos-sel-row">
+              <select id="chaos-select"></select>
+              <button class="btn btn-ghost chaos-sel-row" style="width:auto;padding:5px 10px;" onclick="applyChaos()">OK</button>
+            </div>
+          </div>
+          <button class="btn btn-ghost" onclick="resetUniverse()" style="margin-top:auto;">↺ RESET UNIVERSE</button>
+        </div>
+      </div>
+
+      <!-- CONSOLE -->
+      <div id="console-panel">
+        <div class="panel-hdr"><span class="accent">▌</span> EVENT CONSOLE</div>
+        <div class="console-body" id="console-body"></div>
+      </div>
+
+    </div><!-- /bottom-row -->
+  </div><!-- /main -->
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STARFIELD CANVAS
+// ═══════════════════════════════════════════════
+(function(){
+  const c = document.getElementById('starfield');
+  c.width = window.innerWidth; c.height = window.innerHeight;
+  const ctx = c.getContext('2d');
+  const stars = Array.from({length:120},()=>({
+    x: Math.random()*c.width, y: Math.random()*c.height,
+    r: Math.random()*1.2+0.2, a: Math.random()*0.5+0.1
+  }));
+  stars.forEach(s=>{
+    ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,220,255,${s.a})`; ctx.fill();
+  });
+})();
+
+// ═══════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════
+const CONFIG = {
+  nodes: [
+    { id:"Aegis",   codex:8,  x:0,   y:0,    radius_km:6371,  active_towers:8,  atmosphere_thickness_km:120, refraction_index:1.0003, color:"#60A5FA" },
+    { id:"Boreas",  codex:5,  x:150, y:100,  radius_km:3389,  active_towers:4,  atmosphere_thickness_km:85,  refraction_index:1.052,  color:"#4ADE80" },
+    { id:"Dawn",    codex:6,  x:350, y:50,   radius_km:1500,  active_towers:6,  atmosphere_thickness_km:30,  refraction_index:1.011,  color:"#FB923C" },
+    { id:"Elysium", codex:10, x:300, y:350,  radius_km:6051,  active_towers:12, atmosphere_thickness_km:250, refraction_index:1.185,  color:"#A78BFA" },
+    { id:"Fenix",   codex:16, x:500, y:-100, radius_km:1200,  active_towers:4,  atmosphere_thickness_km:15,  refraction_index:1.005,  color:"#F87171" },
+    { id:"Caelum",  codex:14, x:650, y:200,  radius_km:58232, active_towers:16, atmosphere_thickness_km:500, refraction_index:1.321,  color:"#FCD34D" },
+  ]
+};
+const META = { speed_of_light_kms:300000, max_void_hop_distance_km:50000000, coordinate_scale_unit_km:100000, tower_processing_delay_ms:7, fiber_speed_fraction:0.67 };
+const C=META.speed_of_light_kms, L_MAX=META.max_void_hop_distance_km, SCALE=META.coordinate_scale_unit_km;
+const TOWER_DELAY=META.tower_processing_delay_ms, FIBER_F=META.fiber_speed_fraction;
+const CHARS="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+const PM={};  CONFIG.nodes.forEach(p=>PM[p.id]=p);
+
+// ═══════════════════════════════════════════════
+// ENGINE
+// ═══════════════════════════════════════════════
+function intToBaseN(n,base){
+  if(n===0)return"0"; let d=[];
+  while(n>0){d.push(CHARS[n%base]);n=Math.floor(n/base);}
+  return d.reverse().join('');
+}
+function encodePayload(text,base){ return text.split('').map(c=>intToBaseN(c.charCodeAt(0),base)).join(' '); }
+
+const TOPO={};
+CONFIG.nodes.forEach(p1=>{
+  TOPO[p1.id]={};
+  CONFIG.nodes.forEach(p2=>{
+    if(p1.id===p2.id)return;
+    const dx=(p2.x-p1.x)*SCALE, dy=(p2.y-p1.y)*SCALE;
+    const cd=Math.sqrt(dx*dx+dy*dy);
+    const L=cd-(p1.radius_km+p1.atmosphere_thickness_km)-(p2.radius_km+p2.atmosphere_thickness_km);
+    if(L<0||L>L_MAX)return;
+    const Tv=((p1.atmosphere_thickness_km*p1.refraction_index)+(p2.atmosphere_thickness_km*p2.refraction_index)+L)/C*1000;
+    TOPO[p1.id][p2.id]={latency:Tv,L};
+  });
+});
+
+function linkKey(a,b){return[a,b].sort().join('::');}
+function towerAngle(i,N){return(Math.PI/180)*(90-(360/N)*i);}
+function towerPos(p,i){const a=towerAngle(i,p.active_towers);return{x:p.x*SCALE+p.radius_km*Math.cos(a),y:p.y*SCALE+p.radius_km*Math.sin(a)};}
+function closestPair(src,dst){
+  let best=Infinity,bt1=0,bt2=0;
+  for(let t1=0;t1<src.active_towers;t1++){const p1=towerPos(src,t1);
+    for(let t2=0;t2<dst.active_towers;t2++){const p2=towerPos(dst,t2);
+      const d=(p2.x-p1.x)**2+(p2.y-p1.y)**2;
+      if(d<best){best=d;bt1=t1;bt2=t2;}}}
+  return[bt1,bt2];
+}
+function fiberArc(planet,from_t,to_t){
+  const N=planet.active_towers,r=planet.radius_km;
+  let s,m;
+  if(from_t===to_t){s=0;m=1;}else{const d=Math.abs(from_t-to_t);s=Math.min(d,N-d);m=s+1;}
+  const arc=2*Math.PI*r*(s/N);
+  const Tp=(arc/(FIBER_F*C))*1000+m*TOWER_DELAY;
+  return{Tp,s,m};
+}
+function heuristic(a,b){const dx=(b.x-a.x)*SCALE,dy=(b.y-a.y)*SCALE;return(Math.sqrt(dx*dx+dy*dy)/C)*1000;}
+
+let deadPlanets=new Set(), deadLinks=new Set();
+
+function findRoute(origin,dest,msg){
+  const active=CONFIG.nodes.filter(p=>!deadPlanets.has(p.id)).map(p=>p.id);
+  if(!active.includes(origin)||!active.includes(dest))return null;
+  const g={};active.forEach(id=>g[id]=Infinity);
+  const prev={};active.forEach(id=>prev[id]=null);
+  const bf={};
+  g[origin]=0; bf[origin]=heuristic(PM[origin],PM[dest]);
+  const pq=[[bf[origin],origin]];
+  while(pq.length){
+    pq.sort((a,b)=>a[0]-b[0]);
+    const[cf,curr]=pq.shift();
+    if(curr===dest)break;
+    if(cf>(bf[curr]||Infinity))continue;
+    for(const[nb,{latency}]of Object.entries(TOPO[curr]||{})){
+      if(!active.includes(nb))continue;
+      if(deadLinks.has(linkKey(curr,nb)))continue;
+      const tg=g[curr]+latency;
+      if(tg<g[nb]){g[nb]=tg;prev[nb]=curr;const f=tg+heuristic(PM[nb],PM[dest]);bf[nb]=f;pq.push([f,nb]);}
+    }
+  }
+  const path=[];let step=dest;
+  while(step!==null){path.unshift(step);step=prev[step];}
+  if(!path.length||path[0]!==origin)return null;
+  return buildPacket(path,msg);
+}
+
+function buildPacket(path,msg){
+  const hopLog=[];let totalMs=0;
+  const entryTower={[path[0]]:0};
+  for(let i=0;i<path.length-1;i++){
+    const cId=path[i],nId=path[i+1];
+    const cp=PM[cId],np=PM[nId];
+    const[sendT,recvT]=closestPair(cp,np);
+    const inT=entryTower[cId]||0;
+    const{Tp,s,m}=fiberArc(cp,inT,sendT);
+    const{latency:Tv,L}=TOPO[cId][nId];
+    const atm1=(cp.atmosphere_thickness_km*cp.refraction_index/C)*1000;
+    const void_=(L/C)*1000;
+    const atm2=(np.atmosphere_thickness_km*np.refraction_index/C)*1000;
+    const hopTotal=Tp+Tv;
+    totalMs+=hopTotal;
+    hopLog.push({
+      hop_index:i,tx_planet:cId,rx_planet:nId,
+      tx_tower:`T_${sendT}`,rx_tower:`T_${recvT}`,
+      payload:`[Base ${np.codex}] ${encodePayload(msg,np.codex)}`,
+      breakdown:{fiber_arc:+(Tp-m*TOWER_DELAY).toFixed(4),tower_delay:+(m*TOWER_DELAY).toFixed(4),
+        towers_hit:m,segments:s,atm1:+atm1.toFixed(4),void_ms:+void_.toFixed(4),
+        atm2:+atm2.toFixed(4),void_total:+Tv.toFixed(4),hop_total:+hopTotal.toFixed(4)},
+      void_km:+L.toFixed(2)
+    });
+    entryTower[nId]=recvT;
+  }
+  return{path,totalMs:+totalMs.toFixed(4),hopLog,msg,destCodex:PM[path[path.length-1]].codex};
+}
+
+// ═══════════════════════════════════════════════
+// STAR MAP
+// ═══════════════════════════════════════════════
+let activeRoute=[], planetStates={}, animFrameId=null, packetAnimT=0;
+
+function mapCoords(){
+  const xs=CONFIG.nodes.map(p=>p.x), ys=CONFIG.nodes.map(p=>p.y);
+  const minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys);
+  const svg=document.getElementById('universe-svg');
+  const W=svg.clientWidth||700, H=svg.clientHeight||400;
+  const pad=70;
+  return{
+    mx:x=>pad+(x-minX)/(maxX-minX+0.01)*(W-2*pad),
+    my:y=>H-pad-(y-minY)/(maxY-minY+0.01)*(H-2*pad),
+    W,H
+  };
+}
+
+function renderMap(){
+  const svg=document.getElementById('universe-svg');
+  svg.innerHTML='';
+  const{mx,my,W,H}=mapCoords();
+
+  // defs
+  svg.innerHTML=`<defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <filter id="glow2"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    ${CONFIG.nodes.map(p=>`<radialGradient id="pg-${p.id}" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="${p.color}" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="${p.color}" stop-opacity="0.2"/>
+    </radialGradient>`).join('')}
+  </defs>`;
+
+  // Links
+  const drawn=new Set();
+  CONFIG.nodes.forEach(p1=>{
+    Object.keys(TOPO[p1.id]||{}).forEach(p2id=>{
+      const key=linkKey(p1.id,p2id);
+      if(drawn.has(key))return; drawn.add(key);
+      const p2=PM[p2id];
+      const dead=deadLinks.has(key);
+      const inRoute=activeRoute.length>1&&activeRoute.some((id,i)=>i>0&&((activeRoute[i-1]===p1.id&&id===p2id)||(activeRoute[i-1]===p2id&&id===p1.id)));
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',mx(p1.x)); line.setAttribute('y1',my(p1.y));
+      line.setAttribute('x2',mx(p2.x)); line.setAttribute('y2',my(p2.y));
+      if(dead){line.setAttribute('stroke','rgba(239,68,68,0.25)');line.setAttribute('stroke-dasharray','5,5');}
+      else if(inRoute){line.setAttribute('stroke','rgba(34,211,238,0.6)');line.setAttribute('filter','url(#glow)');line.setAttribute('stroke-width','2');}
+      else{line.setAttribute('stroke','rgba(51,65,85,0.7)');}
+      line.setAttribute('stroke-width',line.getAttribute('stroke-width')||'1');
+      svg.appendChild(line);
+    });
+  });
+
+  // Packet animation along route
+  if(activeRoute.length>1){
+    const totalSegs=activeRoute.length-1;
+    const seg=Math.floor(packetAnimT*totalSegs)%totalSegs;
+    const frac=(packetAnimT*totalSegs)%1;
+    const p1=PM[activeRoute[seg]], p2=PM[activeRoute[seg+1]];
+    const px=mx(p1.x)+(mx(p2.x)-mx(p1.x))*frac;
+    const py=my(p1.y)+(my(p2.y)-my(p1.y))*frac;
+    const pkt=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    pkt.setAttribute('cx',px); pkt.setAttribute('cy',py); pkt.setAttribute('r','5');
+    pkt.setAttribute('fill','#22D3EE'); pkt.setAttribute('filter','url(#glow2)');
+    svg.appendChild(pkt);
+    // trail
+    for(let t=1;t<=4;t++){
+      const tf=Math.max(0,(packetAnimT*totalSegs%1)-t*0.06);
+      const trx=mx(p1.x)+(mx(p2.x)-mx(p1.x))*tf;
+      const try_=my(p1.y)+(my(p2.y)-my(p1.y))*tf;
+      const tr=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      tr.setAttribute('cx',trx); tr.setAttribute('cy',try_); tr.setAttribute('r',4-t*0.6);
+      tr.setAttribute('fill',`rgba(34,211,238,${0.3-t*0.06})`);
+      svg.appendChild(tr);
+    }
+  }
+
+  // Planets
+  CONFIG.nodes.forEach(p=>{
+    const x=mx(p.x), y=my(p.y);
+    const dead=deadPlanets.has(p.id);
+    const inRoute=activeRoute.includes(p.id);
+    const isOrigin=activeRoute[0]===p.id;
+    const isDest=activeRoute[activeRoute.length-1]===p.id;
+    const size=Math.max(10,Math.min(20,10+Math.log(p.radius_km/500)));
+
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer';
+
+    // Glow ring
+    if(inRoute&&!dead){
+      const gring=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      gring.setAttribute('cx',x); gring.setAttribute('cy',y); gring.setAttribute('r',size+8);
+      gring.setAttribute('fill','none');
+      gring.setAttribute('stroke', isOrigin?'rgba(34,197,94,0.4)':isDest?'rgba(139,92,246,0.4)':'rgba(34,211,238,0.3)');
+      gring.setAttribute('stroke-width','2');
+      gring.setAttribute('filter','url(#glow)');
+      svg.appendChild(gring);
+    }
+
+    // Planet circle
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x); circle.setAttribute('cy',y); circle.setAttribute('r',size);
+    circle.setAttribute('fill', dead?'rgba(239,68,68,0.2)':`url(#pg-${p.id})`);
+    circle.setAttribute('stroke', dead?'#EF4444':isOrigin?'#22C55E':isDest?'#8B5CF6':inRoute?'#22D3EE':p.color);
+    circle.setAttribute('stroke-width', inRoute?'2.5':'1.5');
+    if(inRoute&&!dead) circle.setAttribute('filter','url(#glow)');
+    g.appendChild(circle);
+
+    // Planet name
+    const txt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x',x); txt.setAttribute('y',y+size+14);
+    txt.setAttribute('text-anchor','middle');
+    txt.setAttribute('font-family','Orbitron, sans-serif');
+    txt.setAttribute('font-size','10'); txt.setAttribute('font-weight','700');
+    txt.setAttribute('fill', dead?'#EF4444':inRoute?'#22D3EE':p.color);
+    txt.textContent=p.id;
+    g.appendChild(txt);
+
+    // Codex sub-label
+    const sub=document.createElementNS('http://www.w3.org/2000/svg','text');
+    sub.setAttribute('x',x); sub.setAttribute('y',y+size+24);
+    sub.setAttribute('text-anchor','middle');
+    sub.setAttribute('font-family','Space Mono, monospace');
+    sub.setAttribute('font-size','8');
+    sub.setAttribute('fill','#94A3B8');
+    sub.textContent=`B${p.codex}`;
+    g.appendChild(sub);
+
+    // Status indicator
+    const statusDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    statusDot.setAttribute('cx',x+size-3); statusDot.setAttribute('cy',y-size+3); statusDot.setAttribute('r','4');
+    statusDot.setAttribute('fill', dead?'#EF4444':inRoute?'#F59E0B':'#22C55E');
+    g.appendChild(statusDot);
+
+    // Click
+    g.addEventListener('click',()=>showInspector(p.id));
+
+    // Hover tooltip
+    g.addEventListener('mouseenter',()=>{});
+
+    svg.appendChild(g);
+  });
+}
+
+let animRunning=false;
+function startAnim(){
+  if(animRunning)return;
+  animRunning=true;
+  packetAnimT=0;
+  function frame(){
+    if(!animRunning)return;
+    packetAnimT=(packetAnimT+0.004)%1;
+    renderMap();
+    animFrameId=requestAnimationFrame(frame);
+  }
+  frame();
+}
+function stopAnim(){
+  animRunning=false;
+  if(animFrameId)cancelAnimationFrame(animFrameId);
+}
+
+// ═══════════════════════════════════════════════
+// INSPECTOR
+// ═══════════════════════════════════════════════
+function showInspector(pid){
+  const p=PM[pid];
+  const dead=deadPlanets.has(pid);
+  const nbrs=Object.keys(TOPO[pid]||{});
+  const inRoute=activeRoute.includes(pid);
+
+  document.getElementById('inspector-body').innerHTML=`
+    <div class="planet-card">
+      <div class="pname" style="color:${p.color}">${p.id}</div>
+      <div style="margin-bottom:8px;">
+        <span class="status-badge ${dead?'offline':inRoute?'sending':'online'}">
+          ${dead?'✕ OFFLINE':inRoute?'⟶ ACTIVE':'● ONLINE'}
+        </span>
+      </div>
+      <div class="kv"><span class="k">Codex</span><span class="v" style="color:#8B5CF6">Base ${p.codex}</span></div>
+      <div class="kv"><span class="k">Radius</span><span class="v">${p.radius_km.toLocaleString()} km</span></div>
+      <div class="kv"><span class="k">Towers</span><span class="v">${p.active_towers}</span></div>
+      <div class="kv"><span class="k">Atmosphere</span><span class="v">${p.atmosphere_thickness_km} km</span></div>
+      <div class="kv"><span class="k">Refraction</span><span class="v">${p.refraction_index}</span></div>
+    </div>
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.15em;margin-bottom:4px;">Neighbours</div>
+    <div class="nbr-list">
+      ${nbrs.map(n=>{
+        const dl=deadLinks.has(linkKey(pid,n))||deadPlanets.has(n);
+        return`<span class="nbr-tag ${dl?'dead':''}">${dl?'✕':''} ${n}</span>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// TRANSMISSION
+// ═══════════════════════════════════════════════
+let packetCount=0, latencies=[];
+
+function sendTransmission(){
+  const origin=document.getElementById('sel-origin').value;
+  const dest=document.getElementById('sel-dest').value;
+  const msg=document.getElementById('inp-msg').value.trim();
+  const errEl=document.getElementById('tx-error');
+  errEl.style.display='none';
+
+  if(!msg){showErr('Enter a message.');return;}
+  if(origin===dest){showErr('Origin and destination must differ.');return;}
+  if(deadPlanets.has(origin)){showErr(`${origin} is offline.`);return;}
+  if(deadPlanets.has(dest)){showErr(`${dest} is offline.`);return;}
+
+  // Set sending state
+  planetStates[origin]='sending'; planetStates[dest]='recv';
+
+  const result=findRoute(origin,dest,msg);
+
+  if(!result){
+    log(`[ERROR] No route: ${origin} → ${dest}`,'error');
+    showErr('No valid route. Try reviving a planet or link.');
+    document.getElementById('route-result').style.display='none';
+    activeRoute=[]; stopAnim(); renderMap();
+    return;
+  }
+
+  packetCount++;
+  latencies.push(result.totalMs);
+  updateHeader();
+
+  activeRoute=result.path;
+  startAnim();
+  renderResult(result);
+  renderLatency(result);
+  renderHopLog(result);
+  renderCodex(result.msg, result.path, result.destCodex);
+
+  log(`[INFO] Packet #${packetCount} created`,'info');
+  log(`[INFO] Route: ${result.path.join(' → ')}`,'info');
+  log(`[SUCCESS] Delivered · ${(result.totalMs/1000).toFixed(2)}s`,'success');
+
+  function showErr(m){errEl.textContent=m;errEl.style.display='block';}
+}
+
+function runDemo(){
+  document.getElementById('sel-origin').value='Aegis';
+  document.getElementById('sel-dest').value='Caelum';
+  document.getElementById('inp-msg').value='Hello world';
+  sendTransmission();
+}
+
+function renderResult(r){
+  const el=document.getElementById('route-result');
+  el.style.display='block';
+  const routeHtml=r.path.map((id,i)=>`
+    <span class="rnode ${i===0?'src':i===r.path.length-1?'dst':''}">${id}</span>
+    ${i<r.path.length-1?'<span class="rarrow">→</span>':''}
+  `).join('');
+  document.getElementById('route-display').innerHTML=routeHtml;
+  document.getElementById('big-lat').textContent=`${(r.totalMs/1000).toFixed(3)}s`;
+}
+
+function renderLatency(r){
+  const total=r.totalMs;
+  let fiberTotal=0, voidTotal=0, atm1Total=0, atm2Total=0, towerTotal=0;
+  r.hopLog.forEach(h=>{
+    fiberTotal+=h.breakdown.fiber_arc;
+    voidTotal+=h.breakdown.void_ms;
+    atm1Total+=h.breakdown.atm1;
+    atm2Total+=h.breakdown.atm2;
+    towerTotal+=h.breakdown.tower_delay;
+  });
+  const atmTotal=atm1Total+atm2Total;
+
+  function pct(v){return Math.max(1,Math.round(v/total*100));}
+  function fmt(v){return v>=1000?`${(v/1000).toFixed(3)}s`:`${v.toFixed(2)}ms`;}
+
+  document.getElementById('latency-body').innerHTML=`
+    <div class="lat-item">
+      <div class="lat-label"><span class="lk">⚡ Void Travel</span><span class="lv">${fmt(voidTotal)} · ${pct(voidTotal)}%</span></div>
+      <div class="bar-track"><div class="bar-fill bar-cyan" style="width:${pct(voidTotal)}%"></div></div>
+    </div>
+    <div class="lat-item">
+      <div class="lat-label"><span class="lk">🌫 Atmosphere</span><span class="lv">${fmt(atmTotal)} · ${pct(atmTotal)}%</span></div>
+      <div class="bar-track"><div class="bar-fill bar-purple" style="width:${pct(atmTotal)}%"></div></div>
+    </div>
+    <div class="lat-item">
+      <div class="lat-label"><span class="lk">🔗 Fiber Arc</span><span class="lv">${fmt(fiberTotal)} · ${pct(fiberTotal)}%</span></div>
+      <div class="bar-track"><div class="bar-fill bar-green" style="width:${pct(fiberTotal)}%"></div></div>
+    </div>
+    <div class="lat-item">
+      <div class="lat-label"><span class="lk">🗼 Tower Delay</span><span class="lv">${fmt(towerTotal)} · ${pct(towerTotal)}%</span></div>
+      <div class="bar-track"><div class="bar-fill bar-amber" style="width:${pct(towerTotal)}%"></div></div>
+    </div>
+    <div style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;">
+      <div class="lat-label"><span class="lk" style="color:var(--text);font-weight:700;">TOTAL</span><span class="lv" style="color:var(--cyan)">${fmt(total)}</span></div>
+    </div>
+  `;
+}
+
+function renderHopLog(r){
+  document.getElementById('hoplog-body').innerHTML=r.hopLog.map((h,i)=>`
+    <div class="hop-entry done">
+      <div class="htitle">HOP ${i+1} · ${h.tx_planet} → ${h.rx_planet}</div>
+      <div style="color:var(--muted);font-size:10px;">
+        ${h.tx_tower} → ${h.rx_tower} · Void: ${h.void_km.toLocaleString()} km<br>
+        Fiber: ${h.breakdown.fiber_arc.toFixed(2)}ms · Atm: ${(h.breakdown.atm1+h.breakdown.atm2).toFixed(4)}ms · Void: ${h.breakdown.void_ms.toFixed(2)}ms
+      </div>
+      <div class="hpayload">${h.payload}</div>
+    </div>
+  `).join('');
+}
+
+function renderCodex(msg, path, destCodex){
+  const firstCodex=PM[path[1]||path[0]].codex;
+  const asciiVals=msg.split('').map(c=>c.charCodeAt(0));
+  const asciiStr=asciiVals.join(' · ');
+  const b5=msg.split('').map(c=>intToBaseN(c.charCodeAt(0),firstCodex)).join(' ');
+  const destEnc=msg.split('').map(c=>intToBaseN(c.charCodeAt(0),destCodex)).join(' ');
+
+  document.getElementById('codex-body').innerHTML=`
+    <div style="display:flex;gap:0;flex-wrap:wrap;align-items:flex-start;">
+      <div style="min-width:120px;margin-right:12px;">
+        <div class="codex-row"><span class="codex-label">Original</span><span class="codex-val" style="color:var(--text)">"${msg}"</span></div>
+        <div class="codex-arrow">↓</div>
+        <div class="codex-row"><span class="codex-label">ASCII</span><span class="codex-val" style="color:var(--amber)">${asciiStr}</span></div>
+        <div class="codex-arrow">↓</div>
+        <div class="codex-row"><span class="codex-label">Base ${firstCodex}</span><span class="codex-val">${b5}</span></div>
+        ${path.length>2?`<div class="codex-arrow">↓ ... relay ...</div>`:''}
+        <div class="codex-row"><span class="codex-label">Base ${destCodex}</span><span class="codex-val" style="color:var(--green)">${destEnc}</span></div>
+        <div class="codex-arrow">↓</div>
+        <div class="codex-row"><span class="codex-label">Received</span><span class="codex-val" style="color:var(--text)">"${msg}"</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// CHAOS
+// ═══════════════════════════════════════════════
+let chaosMode=null;
+function showChaos(mode){
+  chaosMode=mode;
+  const sub=document.getElementById('chaos-sub');
+  const sel=document.getElementById('chaos-select');
+  const lbl=document.getElementById('chaos-lbl');
+  sub.style.display='block'; sel.innerHTML='';
+  if(mode==='kill-planet'){
+    lbl.textContent='Select planet to kill';
+    CONFIG.nodes.filter(p=>!deadPlanets.has(p.id)).forEach(p=>sel.add(new Option(p.id,p.id)));
+  } else if(mode==='revive-planet'){
+    lbl.textContent='Select planet to revive';
+    [...deadPlanets].forEach(id=>sel.add(new Option(id,id)));
+    if(!sel.options.length){lbl.textContent='No dead planets';return;}
+  } else if(mode==='kill-link'){
+    lbl.textContent='Select link to sever';
+    const seen=new Set();
+    CONFIG.nodes.forEach(p1=>Object.keys(TOPO[p1.id]||{}).forEach(p2id=>{
+      const k=linkKey(p1.id,p2id);
+      if(seen.has(k)||deadLinks.has(k))return; seen.add(k);
+      sel.add(new Option(`${p1.id} ↔ ${p2id}`,k));
+    }));
+  } else if(mode==='revive-link'){
+    lbl.textContent='Select link to restore';
+    deadLinks.forEach(k=>sel.add(new Option(k.replace('::','  ↔  '),k)));
+    if(!sel.options.length){lbl.textContent='No dead links';return;}
+  }
+}
+
+function applyChaos(){
+  const val=document.getElementById('chaos-select').value;
+  if(!val)return;
+  if(chaosMode==='kill-planet'){deadPlanets.add(val);log(`[WARN] Planet ${val} OFFLINE`,'warn');}
+  else if(chaosMode==='revive-planet'){deadPlanets.delete(val);log(`[INFO] Planet ${val} ONLINE`,'info');}
+  else if(chaosMode==='kill-link'){deadLinks.add(val);log(`[WARN] Link ${val.replace('::','↔')} SEVERED`,'warn');}
+  else if(chaosMode==='revive-link'){deadLinks.delete(val);log(`[INFO] Link ${val.replace('::','↔')} RESTORED`,'info');}
+  document.getElementById('chaos-sub').style.display='none';
+  updateSelects(); renderMap(); updateHeader();
+}
+
+function resetUniverse(){
+  deadPlanets.clear(); deadLinks.clear();
+  activeRoute=[]; stopAnim();
+  packetCount=0; latencies=[];
+  updateHeader(); updateSelects(); renderMap();
+  document.getElementById('route-result').style.display='none';
+  document.getElementById('latency-body').innerHTML='<div class="empty" style="padding:12px;"><div class="ico" style="font-size:16px;">📊</div>Send a packet to see latency.</div>';
+  document.getElementById('hoplog-body').innerHTML='<div class="empty" style="padding:12px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>';
+  document.getElementById('codex-body').innerHTML='<div class="empty" style="padding:6px;font-size:10px;">Send a packet to see encoding.</div>';
+  document.getElementById('inspector-body').innerHTML='<div class="empty"><div class="ico">🪐</div>Click a planet on the map to inspect it.</div>';
+  log('[INFO] Universe reset — all nodes restored','info');
+}
+
+// ═══════════════════════════════════════════════
+// CONSOLE
+// ═══════════════════════════════════════════════
+function log(msg, type='info'){
+  const body=document.getElementById('console-body');
+  const d=document.createElement('div');
+  d.className=`log-line log-${type}`;
+  const now=new Date();
+  const ts=`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+  d.innerHTML=`<span style="color:var(--border)">${ts}</span> ${msg}`;
+  body.appendChild(d);
+  body.scrollTop=body.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════
+// HEADER / SELECTS
+// ═══════════════════════════════════════════════
+function updateHeader(){
+  document.getElementById('hdr-packets').textContent=packetCount;
+  document.getElementById('hdr-planets').textContent=CONFIG.nodes.length-deadPlanets.size;
+  if(latencies.length){
+    const avg=latencies.reduce((a,b)=>a+b,0)/latencies.length;
+    document.getElementById('hdr-avg').textContent=avg>=1000?`${(avg/1000).toFixed(2)}s`:`${avg.toFixed(0)}ms`;
+  }
+}
+
+function updateSelects(){
+  ['sel-origin','sel-dest'].forEach(id=>{
+    const sel=document.getElementById(id); const cur=sel.value;
+    sel.innerHTML='';
+    CONFIG.nodes.forEach(p=>{
+      const opt=new Option(`${p.id}${deadPlanets.has(p.id)?' ☠':''}`,p.id);
+      if(deadPlanets.has(p.id))opt.style.color='var(--red)';
+      sel.add(opt);
+    });
+    sel.value=cur;
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init(){
+  CONFIG.nodes.forEach(p=>{
+    document.getElementById('sel-origin').add(new Option(p.id,p.id));
+    document.getElementById('sel-dest').add(new Option(p.id,p.id));
+  });
+  document.getElementById('sel-dest').value='Caelum';
+  renderMap();
+  log('[INFO] Universe loaded — Zeta-26','info');
+  log(`[INFO] ${CONFIG.nodes.length} planets detected`,'info');
+  log('[INFO] A* routing engine ready','info');
+  log('[INFO] Awaiting transmission...','info');
+  window.addEventListener('resize',()=>renderMap());
+}
+init();
+</script>
+</body>
+</html>

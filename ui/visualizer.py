@@ -7,7 +7,7 @@ import os
 import sys
 
 
-# ─── ANSI colour helpers ───────────────────────────────────────────────────────
+# ansi color helpers
 
 def _c(code: str, text: str) -> str:
     return f"\033[{code}m{text}\033[0m"
