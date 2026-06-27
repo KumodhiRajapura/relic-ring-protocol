@@ -35,6 +35,7 @@ def index():
 @app.route("/api/universe", methods=["GET"])
 def get_universe():
     topology = orchestrator.router.get_topology()
+    void_topo = orchestrator.router.get_void_topology()
     links = []
     for src, neighbors in topology.items():
         for dst, latency in neighbors.items():
@@ -42,7 +43,8 @@ def get_universe():
                 links.append({
                     "source": src,
                     "target": dst,
-                    "latency_ms": round(latency, 4)
+                    "latency_ms": round(latency, 4),
+                    "void_latency_ms": round(void_topo.get(src, {}).get(dst, latency), 4)
                 })
     return jsonify({
         "metadata": METADATA,
