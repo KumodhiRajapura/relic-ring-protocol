@@ -53,6 +53,8 @@ class Universe:
         with open(config_path, "r") as f:
             config = json.load(f)
 
+        validate_universe_config(config)
+
         meta = config["universe_metadata"]
 
         self.system_name = meta["system_name"]
@@ -87,3 +89,51 @@ class Universe:
 
     def alive_planets(self) -> list[Planet]:
         return [p for p in self.planets.values() if p.alive]
+
+
+def validate_universe_config(config: dict) -> None:
+    """(#11) Validate universe-config.json at load time with clear error messages."""
+    meta = config.get("universe_metadata", {})
+    nodes = config.get("nodes", [])
+
+    if not nodes:
+        raise ValueError("universe-config.json: 'nodes' list is empty or missing.")
+
+    required_meta = ["system_name", "speed_of_light_kms", "coordinate_scale_unit_km"]
+    for key in required_meta:
+        if key not in meta:
+            raise ValueError(f"universe-config.json: missing required metadata field '{key}'.")
+
+    seen_ids = set()
+    required_node_fields = [
+        "id", "codex", "x", "y", "radius_km",
+        "active_towers", "atmosphere_thickness_km", "refraction_index"
+    ]
+
+    for node in nodes:
+        nid = node.get("id", "<unknown>")
+
+        if nid in seen_ids:
+            raise ValueError(f"Duplicate planet id '{nid}' in universe-config.json.")
+        seen_ids.add(nid)
+
+        for field in required_node_fields:
+            if field not in node:
+                raise ValueError(f"Planet '{nid}': missing required field '{field}'.")
+
+        codex = node["codex"]
+        if not (2 <= codex <= 36):
+            raise ValueError(f"Planet '{nid}': codex must be 2–36, got {codex}.")
+
+        towers = node["active_towers"]
+        if towers < 1:
+            raise ValueError(f"Planet '{nid}': active_towers must be >= 1, got {towers}.")
+
+        if node["radius_km"] <= 0:
+            raise ValueError(f"Planet '{nid}': radius_km must be > 0.")
+
+        if node["atmosphere_thickness_km"] < 0:
+            raise ValueError(f"Planet '{nid}': atmosphere_thickness_km cannot be negative.")
+
+        if node["refraction_index"] < 1.0:
+            raise ValueError(f"Planet '{nid}': refraction_index must be >= 1.0 (got {node['refraction_index']}).")

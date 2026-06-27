@@ -177,13 +177,17 @@ def explain_encoding(text: str, source_codex: int, target_codex: int) -> str:
 
 
 def encode_payload_as_string(text: str, codex: int) -> str:
- 
+    """Encode text to codex and return as space-separated token string.
+
+    Each character is converted to its base-N representation using digit
+    symbols 0-9A-Z. Consistent across all bases — no special case for base 10.
+      Base 10 → "72 101 108 108 111"
+      Base 8  → "110 145 154 154 157"
+      Base 16 → "48 65 6C 6C 6F"
+    """
     CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     tokens = []
     for char in text:
         digits = ascii_to_codex(ord(char), codex)
-        if codex == 10:
-            tokens.append(str(ord(char)))
-        else:
-            tokens.append("".join(CHARS[d] for d in digits))
+        tokens.append("".join(CHARS[d] for d in digits))
     return " ".join(tokens)
