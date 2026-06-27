@@ -249,3 +249,5 @@ class RoutingEngine:
         p1, p2 = self.planets[current_id], self.planets[target_id]
         dist = math.sqrt(((p2["x"] - p1["x"]) * self.scale_unit)**2 + ((p2["y"] - p1["y"]) * self.scale_unit)**2)
         return (dist / self.c) * 1000.0
+    
+    
