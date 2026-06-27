@@ -135,7 +135,6 @@ class RoutingEngine:
         return hop_logs
 
 
-    # HEAP ROUTERS WITH LINK LEVEL FAILURE AWARENESS
     def find_route_dijkstra(self, origin: PlanetId, destination: PlanetId, 
                              active_planets: Set[PlanetId], 
                              disabled_links: Set[LinkId] = None) -> Optional[Dict[str, Any]]:
@@ -205,7 +204,6 @@ class RoutingEngine:
                 if (curr_node, neighbor) in disabled_links or (neighbor, curr_node) in disabled_links:
                     continue
 
-
                 tentative_g = g_score[curr_node] + edge_latency + self.tower_delay
                 if tentative_g < g_score[neighbor]:
                     g_score[neighbor] = tentative_g
@@ -213,13 +211,6 @@ class RoutingEngine:
                     f_score = tentative_g + self._heuristic(neighbor, destination)
                     enqueued_f[neighbor] = f_score
                     heapq.heappush(pq, (f_score, neighbor))
-
-        return self._build_packet_schema(origin, destination, g_score, previous, raw_message="")
-
-    # PACKET GENERATION & DIALECT OUTPUT 
-    def _build_packet_schema(self, origin: PlanetId, destination: PlanetId, 
-                         costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
-                         raw_message: str = "") -> Optional[Dict[str, Any]]:
 
         path: List[PlanetId] = []
         step: Optional[PlanetId] = destination
@@ -229,6 +220,7 @@ class RoutingEngine:
 
         if not path or path[0] != origin:
             return None
+
 
         final_latency = g_score[destination] + self.tower_delay
         translated_payload = CodexTranscoder.encode_payload_for_planet(raw_message, self.planets[destination]["codex"])
