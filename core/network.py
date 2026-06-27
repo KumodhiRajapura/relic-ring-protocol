@@ -33,6 +33,7 @@ class NetworkOrchestrator:
                 "fiber_speed_fraction": universe.fiber_speed_fraction,
             }
 
+            # Planet objects pass කරනවා routing engine ට — raw dicts නෙවෙයි
             self.planets_registry = {pid: p for pid, p in universe.planets.items()}
 
             self.active_planets = set(self.planets_registry.keys())
@@ -87,8 +88,8 @@ class NetworkOrchestrator:
 
         if packet:
             logger.info(
-                f"Packet delivered via {packet['meta_telemetry']['route_taken']} "
-                f"| Latency: {packet['meta_telemetry']['total_latency_ms']} ms"
+                f"Packet delivered via {packet.route_taken} "
+                f"| Latency: {packet.total_latency_ms} ms"
             )
         else:
             logger.warning(f"No route found: {origin} -> {destination}")

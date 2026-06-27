@@ -68,7 +68,7 @@ def transmit():
     result = orchestrator.process_transmission_transaction(origin, destination, message)
 
     if result:
-        return jsonify({"success": True, "packet": result})
+        return jsonify({"success": True, "packet": result.to_dict()})
     else:
         return jsonify({"success": False, "error": "No valid route found. Packet undeliverable."}), 200
 

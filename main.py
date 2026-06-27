@@ -66,7 +66,7 @@ def send_transmission(orchestrator: NetworkOrchestrator, planets: list,
     print_packet_result(result, message)
 
     if result:
-        route = result["meta_telemetry"]["route_taken"]
+        route = result.route_taken
         print_encoding_trace(message, route, planets)
         visualize_universe(planets, orchestrator.router.get_topology(),
                            dead_planets=dead_planets, dead_links=dead_links,
@@ -166,7 +166,7 @@ def run_demo(orchestrator: NetworkOrchestrator, planets: list,
     print_packet_result(result, message)
 
     if result:
-        route = result["meta_telemetry"]["route_taken"]
+        route = result.route_taken
         print_encoding_trace(message, route, planets)
         visualize_universe(planets, orchestrator.router.get_topology(),
                            dead_planets=dead_planets, dead_links=dead_links,

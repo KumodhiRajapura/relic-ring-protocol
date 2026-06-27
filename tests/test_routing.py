@@ -17,39 +17,39 @@ class TestBasicRouting:
     def test_aegis_to_caelum(self, orchestrator):
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Hello world")
         assert result is not None
-        assert result["origin_id"] == "Aegis"
-        assert result["destination_id"] == "Caelum"
-        assert result["payload"] != ""
+        assert result.origin_id == "Aegis"
+        assert result.destination_id == "Caelum"
+        assert result.payload != ""
 
     def test_route_exists(self, orchestrator):
         result = orchestrator.process_transmission_transaction("Aegis", "Boreas", "Test")
         assert result is not None
-        assert "Aegis" in result["meta_telemetry"]["route_taken"]
-        assert "Boreas" in result["meta_telemetry"]["route_taken"]
+        assert "Aegis" in result.route_taken
+        assert "Boreas" in result.route_taken
 
     def test_latency_positive(self, orchestrator):
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Hi")
-        assert result["meta_telemetry"]["total_latency_ms"] > 0
+        assert result.total_latency_ms > 0
 
     def test_hop_log_not_empty(self, orchestrator):
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Hi")
-        assert len(result["hop_log"]) > 0
+        assert len(result.hop_log) > 0
 
     def test_payload_encoded(self, orchestrator):
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Hi")
-        assert result["payload"] != "Hi"
+        assert result.payload != "Hi"
 
 
 class TestNodeFailure:
     def test_kill_node_reroutes(self, orchestrator):
         result1 = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Test")
-        route1 = result1["meta_telemetry"]["route_taken"]
+        route1 = result1.route_taken
 
         orchestrator.set_planet_operational_status("Dawn", False)
         result2 = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Test")
 
         assert result2 is not None
-        assert "Dawn" not in result2["meta_telemetry"]["route_taken"]
+        assert "Dawn" not in result2.route_taken
         orchestrator.set_planet_operational_status("Dawn", True)
 
     def test_kill_origin_returns_none(self, orchestrator):
@@ -70,7 +70,7 @@ class TestLinkFailure:
         orchestrator.set_link_operational_status("Aegis", "Dawn", False)
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Test")
         assert result is not None
-        route = result["meta_telemetry"]["route_taken"]
+        route = result.route_taken
         hops = list(zip(route, route[1:]))
         assert ("Aegis", "Dawn") not in hops
         orchestrator.set_link_operational_status("Aegis", "Dawn", True)
