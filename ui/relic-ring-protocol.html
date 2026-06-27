@@ -177,6 +177,8 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 .chaos-row .btn { flex: 1; }
 .chaos-sel-row { display: flex; gap: 5px; margin-top: 4px; }
 .chaos-sel-row select { flex: 1; }
+#chaos-content::-webkit-scrollbar { width: 3px; }
+#chaos-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
 /* ── ANIM STATUS ── */
 #anim-status {
@@ -320,7 +322,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
     <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:rgba(8,14,26,0.6);">
       <div class="panel-hdr"><span class="accent" style="color:var(--red);">⚡</span> CHAOS CONTROLS</div>
-      <div style="padding:9px 11px;display:flex;flex-direction:column;gap:5px;height:100%;">
+      <div id="chaos-content" style="padding:9px 11px;display:flex;flex-direction:column;gap:5px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;">
         <div class="chaos-row">
           <button class="btn btn-red" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
           <button class="btn btn-ghost" onclick="showChaos('revive-planet')">↑ REVIVE</button>
