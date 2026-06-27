@@ -2,40 +2,17 @@ import math
 import heapq
 from typing import Dict, List, Optional, Set, Tuple, Any
 from core.latency import calc_fiber_transit_time, calc_void_travel_time
+from core.encoder import encode_payload_as_string
+from core.packet import Packet
 
 PlanetId = str
 LinkId = Tuple[PlanetId, PlanetId]
 Milliseconds = float
 Radians = float
 
-CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-
-class CodexTranscoder:
-    @staticmethod
-    def int_to_base_n(n: int, base: int) -> str:
-        if n == 0:
-            return "0"
-        digits = []
-        while n:
-            digits.append(int(n % base))
-            n //= base
-        return "".join(CHARS[d] for d in reversed(digits))
-
-    @classmethod
-    def encode_payload_for_planet(cls, text_payload: str, target_base: int) -> str:
-        if target_base == 10:
-            return " ".join(str(ord(c)) for c in text_payload)
-        return " ".join(cls.int_to_base_n(ord(c), target_base) for c in text_payload)
-
-    @classmethod
-    def format_payload_display(cls, text_payload: str, base: int) -> str:
-        tokens = cls.encode_payload_for_planet(text_payload, base).split()
-        return "[" + "][".join(tokens) + "]"
-
 
 class RoutingEngine:
-    def __init__(self, planets: Dict[PlanetId, Dict[str, Any]], metadata: Dict[str, Any]):
+    def __init__(self, planets, metadata: Dict[str, Any]):
         self.planets = planets
         self.metadata = metadata
 
@@ -45,9 +22,7 @@ class RoutingEngine:
         self.scale_unit: float = float(metadata.get("coordinate_scale_unit_km", 100_000.0))
         self.fiber_fraction: float = float(metadata.get("fiber_speed_fraction", 0.67))
 
-        # Stores: void-only latency for A* heuristic use
         self._void_latency: Dict[PlanetId, Dict[PlanetId, Milliseconds]] = {}
-        # Stores: full hop latency (void + estimated fiber) for edge weights
         self._static_topology: Dict[PlanetId, Dict[PlanetId, Milliseconds]] = {}
         self._precompute_network_topology()
 
@@ -62,34 +37,31 @@ class RoutingEngine:
                 if result is not None:
                     void_lat, total_lat = result
                     self._void_latency[p1_id][p2_id] = void_lat
-                    # BUG FIX #3: edge weight now includes fiber arcs, not just void
                     self._static_topology[p1_id][p2_id] = total_lat
 
     def _compute_hop_latency(self, p1_id: PlanetId, p2_id: PlanetId) -> Optional[Tuple[Milliseconds, Milliseconds]]:
         """Returns (void_only_ms, full_hop_ms) or None if hop is impossible."""
         p1, p2 = self.planets[p1_id], self.planets[p2_id]
 
-        dx = (p2["x"] - p1["x"]) * self.scale_unit
-        dy = (p2["y"] - p1["y"]) * self.scale_unit
+        dx = p2.x - p1.x
+        dy = p2.y - p1.y
         center_dist = math.sqrt(dx * dx + dy * dy)
 
         L = center_dist \
-            - (p1["radius_km"] + p1["atmosphere_thickness_km"]) \
-            - (p2["radius_km"] + p2["atmosphere_thickness_km"])
+            - (p1.radius_km + p1.atmosphere_thickness_km) \
+            - (p2.radius_km + p2.atmosphere_thickness_km)
 
         if L < 0 or L > self.l_max:
             return None
 
         Tv_ms = (
-            (p1["atmosphere_thickness_km"] * p1["refraction_index"])
-            + (p2["atmosphere_thickness_km"] * p2["refraction_index"])
+            (p1.atmosphere_thickness_km * p1.refraction_index)
+            + (p2.atmosphere_thickness_km * p2.refraction_index)
             + L
         ) / self.c * 1000.0
 
-        # Estimate fiber cost: assume entry=0, find closest tower pair
         send_t, recv_t = self._closest_tower_pair(p1_id, p2_id)
         Tp_origin_ms, _, _ = self._fiber_arc_ms(p1_id, 0, send_t)
-        # BUG FIX #2: include destination fiber arc (recv_t → 0 as default exit)
         Tp_dest_ms, _, _ = self._fiber_arc_ms(p2_id, recv_t, 0)
 
         total_ms = Tp_origin_ms + Tv_ms + Tp_dest_ms
@@ -100,19 +72,16 @@ class RoutingEngine:
 
     def _tower_position(self, planet_id: PlanetId, tower_idx: int) -> Tuple[float, float]:
         p = self.planets[planet_id]
-        cx = p["x"] * self.scale_unit
-        cy = p["y"] * self.scale_unit
-        r = p["radius_km"]  # BUG FIX #1: towers sit on surface, not top of atmosphere
-        a = self._tower_angle(tower_idx, p["active_towers"])
-        return cx + r * math.cos(a), cy + r * math.sin(a)
+        a = self._tower_angle(tower_idx, p.active_towers)
+        return p.x + p.radius_km * math.cos(a), p.y + p.radius_km * math.sin(a)
 
     def _closest_tower_pair(self, src_id: PlanetId, dst_id: PlanetId) -> Tuple[int, int]:
         p1, p2 = self.planets[src_id], self.planets[dst_id]
         best_dist = float("inf")
         best = (0, 0)
-        for t1 in range(p1["active_towers"]):
+        for t1 in range(p1.active_towers):
             x1, y1 = self._tower_position(src_id, t1)
-            for t2 in range(p2["active_towers"]):
+            for t2 in range(p2.active_towers):
                 x2, y2 = self._tower_position(dst_id, t2)
                 d = (x2 - x1) ** 2 + (y2 - y1) ** 2
                 if d < best_dist:
@@ -120,17 +89,16 @@ class RoutingEngine:
                     best = (t1, t2)
         return best
 
-    def _fiber_arc_ms(self, planet_id: PlanetId, from_tower: int, to_tower: int):
-    planet = self._make_planet_obj(planet_id)
-    return calc_fiber_transit_time(
-        planet, from_tower, to_tower,
-        self.fiber_fraction, self.c, self.tower_delay
-    )
+    def _fiber_arc_ms(self, planet_id: PlanetId, from_tower: int, to_tower: int) -> Tuple[float, int, int]:
+        return calc_fiber_transit_time(
+            self.planets[planet_id], from_tower, to_tower,
+            self.fiber_fraction, self.c, self.tower_delay
+        )
 
     def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
         p1, p2 = self.planets[current_id], self.planets[target_id]
-        dx = (p2["x"] - p1["x"]) * self.scale_unit
-        dy = (p2["y"] - p1["y"]) * self.scale_unit
+        dx = p2.x - p1.x
+        dy = p2.y - p1.y
         return (math.sqrt(dx * dx + dy * dy) / self.c) * 1000.0
 
     def find_route_astar(
@@ -229,21 +197,19 @@ class RoutingEngine:
 
         hop_log, total_latency_ms = self._reconstruct_hop_logs(path, raw_message)
 
-        dest_codex = self.planets[destination]["codex"]
-        final_payload = CodexTranscoder.encode_payload_for_planet(raw_message, dest_codex)
+        dest_codex = self.planets[destination].codex
+        final_payload = encode_payload_as_string(raw_message, dest_codex)
 
-        return {
-            "origin_id": origin,
-            "destination_id": destination,
-            "current_id": destination,
-            "payload": final_payload,
-            "meta_telemetry": {
-                "total_latency_ms": round(total_latency_ms, 4),
-                "route_taken": path,
-                "hop_count": len(path) - 1,
-            },
-            "hop_log": hop_log,
-        }
+        return Packet(
+            origin_id=origin,
+            destination_id=destination,
+            current_id=destination,
+            payload=final_payload,
+            hop_log=hop_log,
+            delivered=True,
+            total_latency_ms=round(total_latency_ms, 4),
+            route_taken=path,
+        )
 
     def _reconstruct_hop_logs(
         self,
@@ -263,49 +229,34 @@ class RoutingEngine:
             send_t, recv_t = self._closest_tower_pair(curr_id, next_id)
             in_t = entry_tower.get(curr_id, 0)
 
-            # Origin fiber: entry tower → sending tower
             Tp_origin_ms, s_origin, m_origin = self._fiber_arc_ms(curr_id, in_t, send_t)
-
-            # Void travel
             Tv_ms = self._void_latency[curr_id][next_id]
 
-            # BUG FIX #2 & #4: destination fiber arc — recv tower → next entry tower
-            # For final hop, exit tower is 0; for relay hops, we just account for recv→0 handoff
-            next_entry = recv_t  # next hop uses recv_t as its entry
-            # Destination fiber is recv_t → same (0 segments if just receiving here)
-            # Actually: on arrival, signal goes from recv_t to processing (no further arc needed
-            # UNLESS this planet is also a relay where we need to re-transmit).
-            # Per spec: Tp per planet = arc from entry to exit tower.
-            # On the RECEIVING side of this hop: entry=recv_t. We store that for next hop.
-            # But we DO need to count the receiving planet's tower hit (the recv tower itself).
-            # The recv_t tower delay is already included in next hop's Tp when we process it.
-            # However for the FINAL destination, there's no next hop, so we add recv tower delay.
             if i == len(path) - 2:
-                # Final destination: count recv_t processing delay
-                Tp_dest_ms = self.tower_delay  # just the tower hit, no arc travel
+                Tp_dest_ms = self.tower_delay
                 m_dest = 1
                 s_dest = 0
             else:
-                Tp_dest_ms = 0.0  # relay: handled as entry in next hop's origin fiber
+                Tp_dest_ms = 0.0
                 m_dest = 0
                 s_dest = 0
 
-            h1 = curr_planet["atmosphere_thickness_km"]
-            n1 = curr_planet["refraction_index"]
-            h2 = next_planet["atmosphere_thickness_km"]
-            n2 = next_planet["refraction_index"]
+            h1 = curr_planet.atmosphere_thickness_km
+            n1 = curr_planet.refraction_index
+            h2 = next_planet.atmosphere_thickness_km
+            n2 = next_planet.refraction_index
 
-            dx = (next_planet["x"] - curr_planet["x"]) * self.scale_unit
-            dy = (next_planet["y"] - curr_planet["y"]) * self.scale_unit
+            dx = next_planet.x - curr_planet.x
+            dy = next_planet.y - curr_planet.y
             center_dist = math.sqrt(dx * dx + dy * dy)
-            L = max(center_dist - (curr_planet["radius_km"] + h1) - (next_planet["radius_km"] + h2), 0.0)
+            L = max(center_dist - (curr_planet.radius_km + h1) - (next_planet.radius_km + h2), 0.0)
 
             t_atm_origin_ms = (h1 * n1 / self.c) * 1000.0
             t_void_pure_ms = (L / self.c) * 1000.0
             t_atm_dest_ms = (h2 * n2 / self.c) * 1000.0
 
-            next_codex = next_planet["codex"]
-            hop_payload = CodexTranscoder.encode_payload_for_planet(raw_message, next_codex)
+            next_codex = next_planet.codex
+            hop_payload = encode_payload_as_string(raw_message, next_codex)
 
             hop_total = Tp_origin_ms + Tv_ms + Tp_dest_ms
             total_ms += hop_total
