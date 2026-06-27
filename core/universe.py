@@ -12,8 +12,9 @@ class Tower:
         angle_deg = 90.0 - (360.0 / n) * index
         angle_rad = math.radians(angle_deg)
         # Towers sit on the planet surface (radius_km), not the top of the atmosphere
-        self.x = planet.x + planet.radius_km * math.cos(angle_rad)
-        self.y = planet.y + planet.radius_km * math.sin(angle_rad)
+        surface = planet.radius_km + planet.atmosphere_thickness_km
+        self.x = planet.x + surface * math.cos(angle_rad)
+        self.y = planet.y + surface * math.sin(angle_rad)
 
     def __repr__(self):
         return f"Tower(planet={self.planet.id}, index={self.index})"
