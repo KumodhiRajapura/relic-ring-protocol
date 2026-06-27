@@ -169,7 +169,7 @@ class RoutingEngine:
                     previous[neighbor] = curr_node
                     heapq.heappush(pq, (tentative_cost, neighbor))
 
-        return self._build_packet_schema(origin, destination, distances, previous)
+        return self._build_packet_schema(origin, destination, distances, previous, raw_message="")
 
     def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
         p1, p2 = self.planets[current_id], self.planets[target_id]
@@ -211,12 +211,12 @@ class RoutingEngine:
                     enqueued_f[neighbor] = f_score
                     heapq.heappush(pq, (f_score, neighbor))
 
-        return self._build_packet_schema(origin, destination, g_score, previous)
+        return self._build_packet_schema(origin, destination, g_score, previous, raw_message="")
 
     # PACKET GENERATION & DIALECT OUTPUT 
     def _build_packet_schema(self, origin: PlanetId, destination: PlanetId, 
-                             costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
-                             raw_message: str) -> Optional[Dict[str, Any]]:
+                         costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
+                         raw_message: str = "") -> Optional[Dict[str, Any]]:
 
         path: List[PlanetId] = []
         step: Optional[PlanetId] = destination
