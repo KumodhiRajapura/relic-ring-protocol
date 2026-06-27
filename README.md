@@ -1,229 +1,186 @@
-# ✦ Relic Ring Protocol — Zeta-26 Interstellar Network
+# Relic Ring Protocol
 
-**IEEE CS University of Kelaniya · Launch 26**
-
-A simulation of a star-system-wide routing protocol built on primitive physical infrastructure — underground fiber cables and laser transceivers — reconnecting planets of the Zeta-26 system after the Hyper-Flare of 3704 destroyed the quantum Aether-Net.
+A routing protocol simulation for the Zeta-26 star system, built for the IEEE Computer Society University of Kelaniya Hackathon (Launch 26).
 
 ---
 
 ## Setup
 
-**Requirements:** Python 3.10+
+### Requirements
+
+- Python 3.11+
+- pip
+
+### Installation
 
 ```bash
-pip install flask flask-cors
+git clone https://github.com/KumodhiRajapura/relic-ring-protocol.git
 cd relic-ring-protocol
+pip install -r requirements.txt
+```
 
-# Run the interactive CLI
-python3 main.py
+### Running — Terminal Mode
 
-# Or run the web API
-python3 -m api.app
+```bash
+python main.py
+```
+
+### Running — Web UI Mode
+
+```bash
+python api/app.py
+```
+
+Then open `http://localhost:5000` in your browser.
+
+### Running Tests
+
+```bash
+pytest tests/ -v
 ```
 
 ---
 
-## Running the System
-
-On launch you will see:
-1. **Universe initialization** — config parsed, planets loaded, topology precomputed
-2. **Star-map** — ASCII visualization of the Zeta-26 system
-3. **Mission Control menu** with 10 options
-
-### CLI Menu Options
-
-| Key | Action |
-|-----|--------|
-| `1` | Send a message between any two planets |
-| `2` | View the live star-map and topology table |
-| `3` | **Chaos test** — kill a planet (node failure) |
-| `4` | Revive a planet |
-| `5` | **Chaos test** — sever a link (link failure) |
-| `6` | Restore a link |
-| `7` | Show full planet & network details |
-| `8` | Run the built-in demo (`Hello world`: Aegis → Caelum) |
-| `9` | Reset universe (restore all nodes & links) |
-| `0` | Exit |
-
----
-
-## Web API Endpoints
-
-The Flask API (`api/app.py`) exposes the full protocol over HTTP.
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/universe` | Full topology — planets, links, blocked links, active state |
-| `POST` | `/api/transmit` | Send a message `{origin, destination, message}` |
-| `POST` | `/api/planet/<id>/kill` | Take a planet offline |
-| `POST` | `/api/planet/<id>/revive` | Bring a planet back online |
-| `POST` | `/api/link/kill` | Sever a link `{source, target}` |
-| `POST` | `/api/link/revive` | Restore a link `{source, target}` |
-| `POST` | `/api/reset` | Restore all nodes and links |
-
-### `/api/universe` Response Fields
-
-- `links` — reachable planet pairs with `latency_ms` and `void_latency_ms`
-- `blocked_links` — pairs physically unreachable because `L > Lmax` (50,000,000 km), each with `reason: "void_distance_exceeds_lmax"`
-- `active_planets` — currently online planet IDs
-- `disabled_links` — operator-severed links
-
----
-
-## Architecture
+## Project Structure
 
 ```
 relic-ring-protocol/
-├── main.py                  # Interactive CLI entry point
-├── universe-config.json     # Universe definition (planets, metadata)
-├── api/
-│   └── app.py               # Flask REST API
+│
 ├── core/
-│   ├── universe.py          # Planet / Tower / Universe data model + config validator
-│   ├── routing.py           # A* + Dijkstra routing engine, latency formulas
-│   ├── network.py           # NetworkOrchestrator (node/link failure control)
-│   ├── encoder.py           # Codex (base-N) encoding/decoding utilities
-│   └── packet.py            # Packet dataclass
+│   ├── universe.py       # Config loader, Planet, Tower classes
+│   ├── latency.py        # Latency calculation (void, fiber, atmosphere)
+│   ├── encoder.py        # Codex translation between planet dialects
+│   ├── routing.py        # A* and Dijkstra shortest path algorithms
+│   ├── network.py        # Orchestration and failure handling
+│   └── packet.py         # Packet schema definition
+│
+├── api/
+│   └── app.py            # Flask REST API for web UI
+│
+├── ui/
+│   ├── visualizer.py     # Terminal visualizer
+│   └── relic-ring-protocol.html  # Web UI star map
+│
 ├── tests/
-│   ├── test_encoder.py      # 20 tests — ascii↔codex, encode_payload_as_string
-│   ├── test_latency.py      # 18 tests — void distance, fiber arc, hop latency, validator
-│   └── test_routing.py      # 13 tests — routing, kill/revive, link failure, blocked links
-└── ui/
-    └── visualizer.py        # ANSI terminal star-map and packet log renderer
+│   ├── test_encoder.py   # 14 encoder unit tests
+│   ├── test_latency.py   # 13 latency unit tests
+│   └── test_routing.py   # 10 routing unit tests
+│
+├── universe-config.json  # Zeta-26 system configuration
+├── requirements.txt
+└── main.py               # Entry point (terminal mode)
 ```
 
 ---
 
-## Running Tests
+## Assumed Constants
 
-```bash
-python -m pytest tests/ -v
-```
+All physical constants are read from `universe-config.json` under `universe_metadata`. The following defaults apply if a field is absent:
 
-51 tests across encoder, latency, routing, config validator, and blocked-link detection.
-
----
-
-## Config Validation
-
-`universe.py` validates `universe-config.json` at load time and raises descriptive errors for:
-
-- Missing required fields (`id`, `codex`, `x`, `y`, `radius_km`, `active_towers`, `atmosphere_thickness_km`, `refraction_index`)
-- Duplicate planet IDs
-- `codex` outside 2–36
-- `active_towers < 4` (spec requirement)
-- `radius_km ≤ 0`
-- `atmosphere_thickness_km < 0`
-- `refraction_index ≤ 0`
+| Constant | Default Value |
+|---|---|
+| speed_of_light_kms | 300,000 km/s |
+| max_void_hop_distance_km | 50,000,000 km |
+| coordinate_scale_unit_km | 100,000 km/unit |
+| tower_processing_delay_ms | 7 ms |
+| fiber_speed_fraction | 0.67 |
 
 ---
 
-## Latency Model
+## Core Modules
 
-All physical constants are read from `universe_metadata` in the config — nothing is hardcoded.
+### universe.py
 
-### 1. Void Distance (L)
+Loads `universe-config.json` and constructs all planetary objects. Validates config at load time — catches missing fields, duplicate IDs, invalid codex values, and insufficient tower counts.
 
-```
-L = sqrt((x2−x1)² + (y2−y1)²) × S  −  (R1+h1)  −  (R2+h2)
-```
+**Tower placement:** Towers are placed at equal angular intervals starting from the top (positive y-axis, 90°), proceeding clockwise. Position is calculated at `radius + atmosphere_thickness` from the planet center.
 
-Where `S = coordinate_scale_unit_km`. Hops with `L > Lmax` (50,000,000 km) are rejected.
-
-### 2. Void Travel Time (Tv)
-
-```
-Tv = (h1×n1 + h2×n2 + L) / c
-```
-
-Atmospheric refraction is modeled as the signal passing straight through each atmosphere at thickness `h`, slowed by refraction index `n`. Both entry and exit atmospheres are accounted for.
-
-### 3. Fiber Arc Transit (Tp)
-
-```
-Arc length = 2πr × (s/N)
-Tp = arc_length / (f × c)  +  m × Δt
-```
-
-- `s` = number of ring segments traversed (shortest arc)
-- `m` = number of towers hit (`s+1` for different towers; `1` if same tower — dedup per spec)
-- `Δt` = tower processing delay (7 ms default)
-- `f` = fiber speed fraction (0.67c default)
-
-### 4. Total Route Latency
-
-```
-Total = Σ Tp(planet_i)  +  Σ Tv(planet_i → planet_{i+1})
-```
-
-One `Tp` per planet visited, one `Tv` per void hop.
-
-### Assumed Constants (defaults if not in config)
-
-| Constant | Default | Justification |
-|----------|---------|---------------|
-| `speed_of_light_kms` | 300,000 km/s | Physical constant in vacuum |
-| `max_void_hop_distance_km` | 50,000,000 km | Spec constraint (Lmax) |
-| `tower_processing_delay_ms` | 7 ms | Spec default |
-| `fiber_speed_fraction` | 0.67 | Typical silica fiber propagation speed |
-| `coordinate_scale_unit_km` | 100,000 km | Spec default |
+**Coordinate scaling:** `x` and `y` values are multiplied by `coordinate_scale_unit_km` to obtain actual kilometers. `radius_km` is already in kilometers and is not scaled.
 
 ---
 
-## Data Encoding & Transmission Flow
+### latency.py
 
+Calculates all latency components for a single planet-to-planet hop.
+
+**Void Distance (L):**
 ```
-Origin planet (ASCII internally)
-  → convert payload to next-hop planet's codex (base-N)
-  → serialize as binary stream
-  → laser across void (L km)
-  → relay planet receives in its codex
-  → decodes to ASCII for internal routing
-  → re-encodes for next hop codex
-  → ... repeat until destination
-  → destination decodes to ASCII → delivers message
+L = √((x₂−x₁)² + (y₂−y₁)²) − (R₁+h₁) − (R₂+h₂)
 ```
 
-Each hop log entry records:
-- `tx_planet` / `rx_planet` — sending and receiving planets
-- `tx_tower` / `rx_tower` — which towers physically sent and received
-- `ascii_intermediate` — ASCII values of the message at this relay (proving decode step)
-- `payload_in_next_codex` — encoded form transmitted across the void
-- `latency_breakdown` — fiber arc, tower delays, atmosphere, void, per component
-
-### Tower Placement
-
-Towers are placed at equal angular intervals starting from the top (positive y-axis = 90°), numbered clockwise:
-
+**Void Travel Time (Tᵥ):**
 ```
-Tower i  →  angle = 90° − (360°/N) × i
-Position →  (cx + r·cos(angle), cy + r·sin(angle))
+Tᵥ = [ (h₁×n₁) + (h₂×n₂) + L ] / C
 ```
 
-### Line-of-Sight (LoS) Rule
+**Fiber Transit Time (Tₚ):**
+```
+arc = 2πr × (s/N)
+Tₚ = arc / (f×C) + m×Δt
+s = shortest arc segments
+m = towers hit (s+1 for different towers, 1 for same tower)
+```
 
-The tower pair (one per planet) whose positions minimize straight-line distance between them is selected as the send/receive pair for each void hop. This determines `tx_tower` / `rx_tower` in the hop log and the fiber arc path on each planet.
-
-> **Simplification (per spec):** The void distance `L` is computed center-to-center minus atmosphere boundaries, independent of which towers are selected. Tower position affects only internal fiber arc routing and hop log reporting.
+**Total Latency:**
+```
+Total = Σ Tₚ(Pᵢ) + Σ Tᵥ(Pᵢ → Pᵢ₊₁)
+```
 
 ---
 
-## Dynamic Rerouting
+### encoder.py
 
-The routing engine (A*) works on a live set of `active_planets` and `disabled_links`. When you kill a planet or link:
-- It is instantly removed from the routing graph
-- The next transmission automatically finds an alternative route
-- If no route exists, the packet is reported as **undeliverable**
+Handles all codex (numerical base) conversions between planets.
+
+**Transmission flow:**
+```
+Raw payload → ASCII → Next-hop codex → Binary stream → Void → Destination codex → ASCII → Delivered
+```
+
+Key functions: `ascii_to_codex`, `codex_to_ascii`, `encode_string_to_codex`, `decode_codex_to_string`, `convert_payload_between_codex`.
+
+Valid codex range: 2 to 36.
 
 ---
 
-## Zeta-26 Star System
+### routing.py
 
-| Planet | Codex | Towers | Notes |
-|--------|-------|--------|-------|
-| Aegis | Base 8 | 8 | Origin world |
-| Boreas | Base 5 | 4 | Thin atmosphere relay |
-| Dawn | Base 6 | 6 | Key mid-system relay |
-| Elysium | Base 10 | 12 | Dense atmosphere |
-| Fenix | Base 16 | 4 | Outer fast relay |
-| Caelum | Base 14 | 16 | Gas giant, far edge |
+Implements A* and Dijkstra shortest-path algorithms over the planet graph.
+
+- Network topology is precomputed at startup for all valid planet pairs (L ≤ Lmax).
+- Active planet filtering and link failure handling are applied at query time — no topology rebuild required on kill/revive.
+- A* uses a straight-line void distance heuristic (admissible — never overestimates).
+- Physically impossible links (L > Lmax) are tracked and reported separately.
+
+---
+
+### network.py
+
+Single entry point for all transmissions. Manages alive/dead state for planets and links. Delegates pathfinding to `RoutingEngine`.
+
+---
+
+### packet.py
+
+Defines the `Packet` dataclass — the mandatory schema for all inter-planet transmissions.
+
+Fields: `origin_id`, `destination_id`, `current_id`, `payload`, `hop_log`, `delivered`, `total_latency_ms`, `route_taken`.
+
+---
+
+### api/app.py
+
+Flask REST API serving the web UI and exposing endpoints for transmission, chaos control, and universe state.
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/` | GET | Serves web UI |
+| `/api/universe` | GET | Returns full universe state |
+| `/api/transmit` | POST | Send a packet |
+| `/api/planet/<id>/kill` | POST | Kill a planet |
+| `/api/planet/<id>/revive` | POST | Revive a planet |
+| `/api/link/kill` | POST | Sever a link |
+| `/api/link/revive` | POST | Restore a link |
+| `/api/reset` | POST | Reset universe |
+
+---
