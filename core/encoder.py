@@ -174,3 +174,16 @@ def explain_encoding(text: str, source_codex: int, target_codex: int) -> str:
             f"-> Base {target_codex}: {codex_repr}"
         )
     return "\n".join(lines)
+
+
+def encode_payload_as_string(text: str, codex: int) -> str:
+ 
+    CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    tokens = []
+    for char in text:
+        digits = ascii_to_codex(ord(char), codex)
+        if codex == 10:
+            tokens.append(str(ord(char)))
+        else:
+            tokens.append("".join(CHARS[d] for d in digits))
+    return " ".join(tokens)
