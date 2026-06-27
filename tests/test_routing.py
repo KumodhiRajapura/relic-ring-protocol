@@ -83,3 +83,21 @@ class TestReset:
         orchestrator.reload_universe_configuration()
         result = orchestrator.process_transmission_transaction("Aegis", "Caelum", "Test")
         assert result is not None
+
+class TestBlockedLinks:
+    def test_get_blocked_links_returns_list(self, orchestrator):
+        blocked = orchestrator.router.get_blocked_links()
+        assert isinstance(blocked, list)
+
+    def test_blocked_links_have_required_fields(self, orchestrator):
+        blocked = orchestrator.router.get_blocked_links()
+        for entry in blocked:
+            assert "source" in entry
+            assert "target" in entry
+            assert "reason" in entry
+            assert entry["reason"] == "void_distance_exceeds_lmax"
+
+    def test_no_duplicate_pairs(self, orchestrator):
+        blocked = orchestrator.router.get_blocked_links()
+        pairs = [tuple(sorted((e["source"], e["target"]))) for e in blocked]
+        assert len(pairs) == len(set(pairs))

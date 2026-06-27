@@ -126,8 +126,8 @@ def validate_universe_config(config: dict) -> None:
             raise ValueError(f"Planet '{nid}': codex must be 2–36, got {codex}.")
 
         towers = node["active_towers"]
-        if towers < 1:
-            raise ValueError(f"Planet '{nid}': active_towers must be >= 1, got {towers}.")
+        if towers < 4:
+            raise ValueError(f"Planet '{nid}': active_towers must be >= 4 (spec requirement), got {towers}.")
 
         if node["radius_km"] <= 0:
             raise ValueError(f"Planet '{nid}': radius_km must be > 0.")
@@ -135,5 +135,5 @@ def validate_universe_config(config: dict) -> None:
         if node["atmosphere_thickness_km"] < 0:
             raise ValueError(f"Planet '{nid}': atmosphere_thickness_km cannot be negative.")
 
-        if node["refraction_index"] < 1.0:
-            raise ValueError(f"Planet '{nid}': refraction_index must be >= 1.0 (got {node['refraction_index']}).")
+        if node["refraction_index"] <= 0:
+            raise ValueError(f"Planet '{nid}': refraction_index must be > 0, got {node['refraction_index']}.")

@@ -51,7 +51,8 @@ def get_universe():
         "planets": PLANETS,
         "links": links,
         "active_planets": list(orchestrator.active_planets),
-        "disabled_links": [list(l) for l in orchestrator.disabled_links]
+        "disabled_links": [list(l) for l in orchestrator.disabled_links],
+        "blocked_links": orchestrator.router.get_blocked_links()
     })
 
 

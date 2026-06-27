@@ -7,7 +7,7 @@ from core.encoder import (
     ascii_to_codex, codex_to_ascii,
     encode_string_to_codex, decode_codex_to_string,
     convert_payload_between_codex, is_valid_codex,
-    format_codex_representation
+    format_codex_representation, encode_payload_as_string
 )
 
 
@@ -76,3 +76,39 @@ class TestValidation:
     def test_format(self):
         result = format_codex_representation([[2, 4, 2], [1, 0, 0]])
         assert result == "[2,4,2] [1,0,0]"
+
+class TestEncodePayloadAsString:
+    def test_h_base5(self):
+        # 'H' = ASCII 72 = [2,4,2] in base-5 -> "242"
+        result = encode_payload_as_string("H", 5)
+        assert result == "242"
+
+    def test_h_base14(self):
+        # 'H' = ASCII 72 = [5,2] in base-14 -> "52"
+        result = encode_payload_as_string("H", 14)
+        assert result == "52"
+
+    def test_base10_digit_representation(self):
+        # 'H' = ASCII 72 = [7,2] in base-10 -> "72" (no special case, consistent)
+        result = encode_payload_as_string("H", 10)
+        assert result == "72"
+
+    def test_base16_uppercase(self):
+        # 'H' = 72 = 0x48 -> "48"
+        result = encode_payload_as_string("H", 16)
+        assert result == "48"
+
+    def test_space_separated_tokens(self):
+        result = encode_payload_as_string("Hi", 16)
+        tokens = result.split(" ")
+        assert len(tokens) == 2
+
+    def test_consistent_across_bases(self):
+        CHARS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        for base in [5, 8, 10, 14, 16]:
+            result = encode_payload_as_string("A", base)
+            digits = [CHARS.index(c) for c in result]
+            val = 0
+            for d in digits:
+                val = val * base + d
+            assert val == ord("A"), f"Roundtrip failed for base {base}"

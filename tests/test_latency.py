@@ -106,3 +106,85 @@ class TestHopLatency:
         assert "void_ms" in result["latency"]
         assert "fiber_destination_ms" in result["latency"]
         assert "total_ms" in result["latency"]
+
+class TestUniverseValidator:
+    def test_duplicate_id_raises(self):
+        from core.universe import validate_universe_config
+        config = {
+            "universe_metadata": {
+                "system_name": "Test",
+                "speed_of_light_kms": 300000,
+                "coordinate_scale_unit_km": 100000
+            },
+            "nodes": [
+                {"id": "A", "codex": 10, "x": 0, "y": 0, "radius_km": 1000,
+                 "active_towers": 4, "atmosphere_thickness_km": 100, "refraction_index": 1.2},
+                {"id": "A", "codex": 8, "x": 1, "y": 1, "radius_km": 1000,
+                 "active_towers": 4, "atmosphere_thickness_km": 100, "refraction_index": 1.2},
+            ]
+        }
+        with pytest.raises(ValueError, match="Duplicate"):
+            validate_universe_config(config)
+
+    def test_towers_below_4_raises(self):
+        from core.universe import validate_universe_config
+        config = {
+            "universe_metadata": {
+                "system_name": "Test",
+                "speed_of_light_kms": 300000,
+                "coordinate_scale_unit_km": 100000
+            },
+            "nodes": [
+                {"id": "A", "codex": 10, "x": 0, "y": 0, "radius_km": 1000,
+                 "active_towers": 3, "atmosphere_thickness_km": 100, "refraction_index": 1.2},
+            ]
+        }
+        with pytest.raises(ValueError, match="active_towers must be >= 4"):
+            validate_universe_config(config)
+
+    def test_invalid_codex_raises(self):
+        from core.universe import validate_universe_config
+        config = {
+            "universe_metadata": {
+                "system_name": "Test",
+                "speed_of_light_kms": 300000,
+                "coordinate_scale_unit_km": 100000
+            },
+            "nodes": [
+                {"id": "A", "codex": 1, "x": 0, "y": 0, "radius_km": 1000,
+                 "active_towers": 4, "atmosphere_thickness_km": 100, "refraction_index": 1.2},
+            ]
+        }
+        with pytest.raises(ValueError, match="codex must be"):
+            validate_universe_config(config)
+
+    def test_zero_refraction_raises(self):
+        from core.universe import validate_universe_config
+        config = {
+            "universe_metadata": {
+                "system_name": "Test",
+                "speed_of_light_kms": 300000,
+                "coordinate_scale_unit_km": 100000
+            },
+            "nodes": [
+                {"id": "A", "codex": 10, "x": 0, "y": 0, "radius_km": 1000,
+                 "active_towers": 4, "atmosphere_thickness_km": 100, "refraction_index": 0},
+            ]
+        }
+        with pytest.raises(ValueError, match="refraction_index"):
+            validate_universe_config(config)
+
+    def test_valid_config_passes(self):
+        from core.universe import validate_universe_config
+        config = {
+            "universe_metadata": {
+                "system_name": "Test",
+                "speed_of_light_kms": 300000,
+                "coordinate_scale_unit_km": 100000
+            },
+            "nodes": [
+                {"id": "A", "codex": 10, "x": 0, "y": 0, "radius_km": 1000,
+                 "active_towers": 4, "atmosphere_thickness_km": 100, "refraction_index": 0.8},
+            ]
+        }
+        validate_universe_config(config)  # should not raise
