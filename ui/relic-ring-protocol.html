@@ -22,21 +22,20 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%;  overflow-y:auto;
-    overflow-x:hidden;}
+html, body { height: 100%; overflow-y:auto;
+    overflow-x:hidden; }
 
 body {
   background: var(--bg);
   color: var(--text);
   font-family: 'Space Mono', monospace;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 /* ── STARFIELD ── */
 #starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 
 .app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height:100vh; }
-
 /* ── HEADER ── */
 header {
   background: rgba(13,21,38,0.95);
@@ -49,17 +48,18 @@ header {
 }
 .logo {
   font-family: 'Orbitron', sans-serif;
-  font-weight: 900; font-size: 13px;
+  font-weight: 900; font-size: 15px;
   color: var(--cyan);
   letter-spacing: 0.14em;
   text-shadow: 0 0 24px rgba(34,211,238,0.6);
 }
-.logo span { color: var(--muted); font-weight: 400; font-size: 10px; margin-left: 8px; letter-spacing: 0.1em; }
+.logo span { color: var(--muted); font-weight: 400; font-size: 11px; margin-left: 8px; letter-spacing: 0.1em; }
 .header-stats { margin-left: auto; display: flex; gap: 20px; align-items: center; }
-.hstat { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
-.hstat b { color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 12px; }
+.hstat { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); }
+.hstat b { color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 14px; }
 .dot-live { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.25} }
+
 
 /* ── LAYOUT ── */
 .main {
@@ -91,7 +91,7 @@ header {
   display: flex; align-items: center; gap: 7px;
   flex-shrink: 0;
 }
-.panel-hdr .accent { color: var(--cyan); font-size: 10px; }
+.panel-hdr .accent { color: var(--cyan); font-size: 12px; }
 
 .panel-body { flex: 1; overflow: auto; padding: 11px; font-size: 10px;;}
 .panel-body::-webkit-scrollbar { width: 3px; }
@@ -115,14 +115,14 @@ header {
 /* ── FORM ── */
 select, input[type="text"] {
   width: 100%; background: var(--surface); border: 1px solid var(--border);
-  color: var(--text); font-family: 'Space Mono', monospace; font-size: 11px;
-  padding: 6px 8px; outline: none; border-radius: 4px;
+  color: var(--text); font-family: 'Space Mono', monospace; font-size: 13px;
+  padding: 7px 9px; outline: none; border-radius: 4px;
 }
 select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(34,211,238,0.12); }
-.field { margin-bottom: 7px; }
-.field label { display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.field { margin-bottom: 8px; }
+.field label { display: block; font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
 
-.btn { padding: 7px 10px; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; border: none; border-radius: 4px; text-transform: uppercase; transition: all 0.15s; width: 100%; }
+.btn { padding: 8px 11px; font-family: 'Orbitron', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; border: none; border-radius: 4px; text-transform: uppercase; transition: all 0.15s; width: 100%; }
 .btn-cyan { background: var(--cyan); color: #000; }
 .btn-cyan:hover { background: #06B6D4; box-shadow: 0 0 20px rgba(34,211,238,0.45); }
 .btn-red { background: transparent; border: 1px solid var(--red); color: var(--red); }
@@ -134,17 +134,17 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
 /* ── PLANET CARD ── */
 .planet-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 9px; margin-bottom: 7px; }
-.planet-card .pname { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; margin-bottom: 6px; }
-.kv { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+.planet-card .pname { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 14px; margin-bottom: 6px; }
+.kv { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .kv .k { color: var(--muted); }
 .kv .v { color: var(--text); font-weight: 700; }
-.status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 8px; padding: 2px 7px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 0.1em; }
+.status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; padding: 3px 8px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 0.1em; }
 .online  { background: rgba(34,197,94,0.12);  border: 1px solid rgba(34,197,94,0.35);  color: var(--green); }
 .offline { background: rgba(239,68,68,0.12);  border: 1px solid rgba(239,68,68,0.35);  color: var(--red); }
 
 /* ── LATENCY BARS ── */
 .lat-item { margin-bottom: 7px; }
-.lat-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
+.lat-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 3px; }
 .lat-label .lk { color: var(--muted); }
 .lat-label .lv { color: var(--text); font-weight: 700; }
 .bar-track { height: 5px; background: rgba(30,48,80,0.8); border-radius: 3px; overflow: hidden; }
@@ -155,23 +155,23 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 .bar-amber  { background: linear-gradient(90deg,#F59E0B,#D97706); box-shadow: 0 0 8px rgba(245,158,11,0.4); }
 
 /* ── HOP LOG ── */
-.hop-entry { border-left: 2px solid var(--border); padding-left: 7px; margin-bottom: 7px; font-size: 10px; line-height: 1.5; }
+.hop-entry { border-left: 2px solid var(--border); padding-left: 7px; margin-bottom: 7px; font-size: 12px; line-height: 1.5; }
 .hop-entry.active  { border-left-color: var(--cyan); animation: hopPulse 0.6s ease; }
 .hop-entry.done    { border-left-color: var(--green); }
 @keyframes hopPulse { from { background: rgba(34,211,238,0.08); } to { background: transparent; } }
-.hop-entry .htitle { color: var(--cyan); font-size: 8px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 2px; }
-.hop-entry .hpayload { color: var(--purple); word-break: break-all; font-size: 9px; margin-top: 3px; }
+.hop-entry .htitle { color: var(--cyan); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 2px; }
+.hop-entry .hpayload { color: var(--purple); word-break: break-all; font-size: 11px; margin-top: 3px; }
 
 /* ── ROUTE DISPLAY ── */
 .route-display { display: flex; flex-wrap: wrap; align-items: center; gap: 3px; margin-bottom: 7px; }
-.rnode { font-family: 'Orbitron', sans-serif; font-size: 9px; font-weight: 700; padding: 3px 7px; background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.25); color: var(--cyan); border-radius: 3px; }
+.rnode { font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700; padding: 3px 7px; background: rgba(34,211,238,0.08); border: 1px solid rgba(34,211,238,0.25); color: var(--cyan); border-radius: 3px; }
 .rnode.src { border-color: rgba(34,197,94,0.5); background: rgba(34,197,94,0.08); color: var(--green); }
 .rnode.dst { border-color: rgba(139,92,246,0.5); background: rgba(139,92,246,0.08); color: var(--purple); }
 .rnode.active { border-color: var(--cyan); background: rgba(34,211,238,0.18); box-shadow: 0 0 12px rgba(34,211,238,0.3); }
 .rarrow { color: var(--border); font-size: 11px; }
 
-.big-lat { font-family: 'Orbitron', sans-serif; font-size: 24px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 24px rgba(34,211,238,0.5); }
-.big-lat-label { font-size: 8px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.18em; margin-top: 2px; }
+.big-lat { font-family: 'Orbitron', sans-serif; font-size: 28px; font-weight: 900; color: var(--cyan); text-shadow: 0 0 24px rgba(34,211,238,0.5); }
+.big-lat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.18em; margin-top: 2px; }
 
 /* ── CHAOS ── */
 .chaos-row { display: flex; gap: 5px; margin-bottom: 5px; }
@@ -190,7 +190,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
   background: rgba(34,211,238,0.07);
   border: 1px solid rgba(34,211,238,0.2);
   border-radius: 4px;
-  font-size: 9px; color: var(--cyan);
+  font-size: 11px; color: var(--cyan);
 }
 #anim-status.show { display: flex; }
 #anim-progress { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
@@ -199,19 +199,19 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
 /* ── SPEED CONTROL ── */
 .speed-row { display: flex; align-items: center; gap: 6px; margin-top: 5px; }
-.speed-row label { font-size: 9px; color: var(--muted); white-space: nowrap; }
+.speed-row label { font-size: 11px; color: var(--muted); white-space: nowrap; }
 .speed-row input[type=range] { flex: 1; accent-color: var(--cyan); }
-#speed-val { font-size: 9px; color: var(--cyan); font-family: 'Orbitron', sans-serif; white-space: nowrap; }
+#speed-val { font-size: 11px; color: var(--cyan); font-family: 'Orbitron', sans-serif; white-space: nowrap; }
 
 /* ── NEIGHBOUR TAGS ── */
 .nbr-list { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; }
-.nbr-tag { font-size: 9px; padding: 2px 6px; background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.18); color: var(--cyan); border-radius: 3px; }
+.nbr-tag { font-size: 11px; padding: 2px 6px; background: rgba(34,211,238,0.06); border: 1px solid rgba(34,211,238,0.18); color: var(--cyan); border-radius: 3px; }
 .nbr-tag.dead { border-color: rgba(239,68,68,0.25); color: var(--red); background: rgba(239,68,68,0.06); }
 
 /* ── CONSOLE ── */
 .console-body { padding: 7px 11px; overflow: auto; height: 100%; }
 .console-body::-webkit-scrollbar { width: 3px; }
-.log-line { font-size: 10px; margin-bottom: 2px; line-height: 1.5; }
+.log-line { font-size: 12px; margin-bottom: 2px; line-height: 1.5; }
 .log-info    { color: var(--muted); }
 .log-success { color: var(--green); }
 .log-error   { color: var(--red); }
@@ -220,11 +220,11 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
 /* ── CODEX ── */
 .codex-row { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 4px; }
-.codex-label { width: 52px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
-.codex-val { flex: 1; font-size: 10px; color: var(--cyan); word-break: break-all; }
-.codex-arrow { color: var(--border); font-size: 12px; margin: 1px 0 1px 52px; }
+.codex-label { width: 58px; font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
+.codex-val { flex: 1; font-size: 11px; color: var(--cyan); word-break: break-all; }
+.codex-arrow { color: var(--border); font-size: 13px; margin: 1px 0 1px 58px; }
 
-.empty { text-align: center; padding: 16px; color: var(--muted); font-size: 12px; }
+.empty { text-align: center; padding: 16px; color: var(--muted); font-size: 13px; }
 .empty .ico { font-size: 22px; margin-bottom: 6px; }
 
 /* ── LINK LABELS on SVG ── */
@@ -249,7 +249,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
     <!-- MAP -->
     <div class="panel" id="map-panel">
-      <div class="panel-hdr"><span class="accent">◉</span> UNIVERSE MAP — ZETA-26 STAR SYSTEM <span style="margin-left:auto;font-size:8px;" id="map-status">IDLE</span></div>
+      <div class="panel-hdr"><span class="accent">◉</span> UNIVERSE MAP — ZETA-26 STAR SYSTEM <span style="margin-left:auto;font-size:10px;" id="map-status">IDLE</span></div>
       <svg id="universe-svg"></svg>
     </div>
 
@@ -283,7 +283,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
           <span id="anim-ms-label" style="font-size:10px;color:var(--muted)"></span>
         </div>
 
-        <div id="tx-error" style="color:var(--red);font-size:10px;margin-top:6px;display:none;"></div>
+        <div id="tx-error" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
 
         <div id="route-result" style="margin-top:9px;display:none;">
           <div class="route-display" id="route-display"></div>
@@ -312,11 +312,10 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
   </div><!-- /main -->
 
   <!-- BOTTOM BAR: Codex | Chaos | Console -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:210px; font-size:10px;">
-
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:210px; font-size:10px;">
     <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:rgba(8,14,26,0.6);">
       <div class="panel-hdr"><span class="accent">⌬</span> CODEX TRANSLATION</div>
-      <div class="panel-body" id="codex-body" style="padding:7px 11px; font-size:10px;">
+      <div class="panel-body" id="codex-body" style="padding:7px 11px;">
         <div class="empty" style="padding:4px;font-size:12px;">Send a packet to see encoding.</div>
       </div>
     </div>
@@ -688,8 +687,7 @@ function renderMap(){
         line.setAttribute('filter','url(#glow)');
       } else if(isCompletedHop){
         line.setAttribute('stroke','rgba(34,211,238,0.85)');
-        line.setAttribute('stroke-width','2.5');
-        line.setAttribute('filter','url(#glow)');
+        line.setAttribute('stroke-width','2');
       } else if(inRoute){
         line.setAttribute('stroke','rgba(34,211,238,0.35)');
         line.setAttribute('stroke-width','1.5');
@@ -707,7 +705,7 @@ function renderMap(){
           const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
           lbl.setAttribute('x',tx); lbl.setAttribute('y',ty-4);
           lbl.setAttribute('fill','rgba(34,211,238,0.7)');
-          lbl.setAttribute('font-size','9'); lbl.setAttribute('font-family','Space Mono,monospace');
+          lbl.setAttribute('font-size','11'); lbl.setAttribute('font-family','Space Mono,monospace');
           lbl.setAttribute('text-anchor','middle');
           lbl.textContent=fmtMs(sl.void_latency_ms||sl.latency_ms);
           svg.appendChild(lbl);
@@ -776,6 +774,12 @@ function renderMap(){
     g.style.cursor='pointer';
     g.onclick=()=>inspectPlanet(p.id);
 
+    // Hover: grow the planet a little
+    g.style.transition='transform 0.15s ease';
+    g.style.transformOrigin=`${x}px ${y}px`;
+    g.onmouseenter=()=>{ g.style.transform='scale(1.18)'; };
+    g.onmouseleave=()=>{ g.style.transform='scale(1)'; };
+
     // Orbit ring for active transmit/recv
     if(isCurrentTx||isCurrentRx){
       const orbit=document.createElementNS('http://www.w3.org/2000/svg','circle');
@@ -841,7 +845,7 @@ function renderMap(){
     const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
     lbl.setAttribute('x',x); lbl.setAttribute('y',y+size+13);
     lbl.setAttribute('fill', dead?'rgba(239,68,68,0.6)':(inRoute?p.color:'rgba(107,141,181,0.9)'));
-    lbl.setAttribute('font-size','9'); lbl.setAttribute('font-family','Orbitron,sans-serif');
+    lbl.setAttribute('font-size','11'); lbl.setAttribute('font-family','Orbitron,sans-serif');
     lbl.setAttribute('font-weight','700'); lbl.setAttribute('text-anchor','middle');
     lbl.setAttribute('letter-spacing','0.08em');
     lbl.textContent=p.id+(dead?' ☠':'');
@@ -851,7 +855,7 @@ function renderMap(){
     const codexLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
     codexLbl.setAttribute('x',x); codexLbl.setAttribute('y',y+size+22);
     codexLbl.setAttribute('fill','rgba(107,141,181,0.6)');
-    codexLbl.setAttribute('font-size','7.5'); codexLbl.setAttribute('font-family','Space Mono,monospace');
+    codexLbl.setAttribute('font-size','9'); codexLbl.setAttribute('font-family','Space Mono,monospace');
     codexLbl.setAttribute('text-anchor','middle');
     codexLbl.textContent=`Base ${p.codex}`;
     g.appendChild(codexLbl);
@@ -963,7 +967,7 @@ function renderHopLogEmpty(hopLog){
   document.getElementById('hoplog-body').innerHTML = hopLog.map((h,i)=>`
     <div class="hop-entry" id="hop-entry-${i}" style="opacity:0.3;">
       <div class="htitle">HOP ${i+1} · ${h.tx_planet} → ${h.rx_planet}</div>
-      <div style="color:var(--muted);font-size:10px;">${h.tx_tower} → ${h.rx_tower}</div>
+      <div style="color:var(--muted);font-size:12px;">${h.tx_tower} → ${h.rx_tower}</div>
     </div>
   `).join('');
 }
@@ -975,7 +979,7 @@ function revealHopEntry(idx, hop){
   el.className='hop-entry done';
   el.innerHTML=`
     <div class="htitle">HOP ${idx+1} · ${hop.tx_planet} → ${hop.rx_planet}</div>
-    <div style="color:var(--muted);font-size:10px;">
+    <div style="color:var(--muted);font-size:12px;">
       ${hop.tx_tower} → ${hop.rx_tower} · Void: ${hop.void_km.toLocaleString()} km<br>
       Fiber: ${fmtMs(hop.breakdown.fiber_arc)} · Atm: ${fmtMs(hop.breakdown.atm1+hop.breakdown.atm2)} · Void: ${fmtMs(hop.breakdown.void_ms)} · Towers: ${hop.breakdown.towers_hit}×${TOWER_DELAY}ms
     </div>
@@ -1093,7 +1097,7 @@ function inspectPlanet(id){
       <div class="kv"><span class="k">Refraction</span><span class="v">n = ${p.refraction_index}</span></div>
       <div class="kv"><span class="k">Position</span><span class="v">(${p.x}, ${p.y})</span></div>
     </div>
-    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Reachable Links</div>
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px;">Reachable Links</div>
     <div class="nbr-list">${neighbors.map(nb=>`<span class="nbr-tag ${deadPlanets.has(nb)||deadLinks.has(linkKey(id,nb))?'dead':''}">${nb} ${fmtMs((TOPO[id][nb]||{}).latency||0)}</span>`).join('')}</div>
     <div style="margin-top:8px;">
       <button class="btn ${dead?'btn-ghost':'btn-red'}" onclick="${dead?`revivePlanet('${id}')`:`killPlanet('${id}')`}">${dead?'↑ REVIVE PLANET':'☠ KILL PLANET'}</button>
@@ -1175,7 +1179,7 @@ async function resetUniverse(){
   document.getElementById('route-result').style.display='none';
   document.getElementById('latency-body').innerHTML='<div class="empty" style="padding:10px;"><div class="ico" style="font-size:16px;">📊</div>Send a packet.</div>';
   document.getElementById('hoplog-body').innerHTML='<div class="empty" style="padding:10px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>';
-  document.getElementById('codex-body').innerHTML='<div class="empty" style="padding:4px;font-size:10px;">Send a packet to see encoding.</div>';
+  document.getElementById('codex-body').innerHTML='<div class="empty" style="padding:4px;font-size:12px;">Send a packet to see encoding.</div>';
   document.getElementById('inspector-body').innerHTML='<div class="empty"><div class="ico">🪐</div>Click a planet to inspect it.</div>';
   try{await fetch('/api/reset',{method:'POST'});}catch(e){}
   log('[INFO] Universe reset — all nodes restored','info');
