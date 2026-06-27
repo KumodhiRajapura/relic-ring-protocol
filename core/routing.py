@@ -18,7 +18,6 @@ class CodexTranscoder:
         while n:
             digits.append(int(n % base))
             n //= base
-        # Map digits above 9 to alphanumeric characters for clean string representation
         chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"              
         return "".join(chars[d] for d in reversed(digits))
 
@@ -134,7 +133,7 @@ class RoutingEngine:
         return hop_logs
 
 
-    # HEAP ROUTERS WITH LINK-LEVEL FAILURE AWARENESS
+    # HEAP ROUTERS WITH LINK LEVEL FAILURE AWARENESS
     def find_route_dijkstra(self, origin: PlanetId, destination: PlanetId, 
                              active_planets: Set[PlanetId], 
                              disabled_links: Set[LinkId] = None) -> Optional[Dict[str, Any]]:
@@ -214,5 +213,35 @@ class RoutingEngine:
 
         return self._build_packet_schema(origin, destination, g_score, previous)
 
+    # PACKET GENERATION & DIALECT OUTPUT 
+    def _build_packet_schema(self, origin: PlanetId, destination: PlanetId, 
+                             costs: Dict[PlanetId, float], previous: Dict[PlanetId, Optional[PlanetId]], 
+                             raw_message: str) -> Optional[Dict[str, Any]]:
 
-    
+        path: List[PlanetId] = []
+        step: Optional[PlanetId] = destination
+        while step is not None:
+            path.insert(0, step)
+            step = previous[step]
+
+        if not path or path[0] != origin:
+            return None
+
+        final_latency = costs[destination] + self.tower_delay
+        hop_log_data = self.reconstruct_hop_logs(path)
+
+        # Transcode the dynamic user message into the destination's distinct number base 
+        dest_node_data = self.planets[destination]
+        translated_payload = CodexTranscoder.encode_payload_for_planet(raw_message, dest_node_data["codex"])
+
+        return {
+            "origin_id": origin,
+            "destination_id": destination,
+            "current_id": destination,           # Terminal node delivery state
+            "payload": translated_payload,       # Transcoded Base-N dialect string 
+            "meta_telemetry": {
+                "total_latency_ms": round(final_latency, 4),
+                "route_taken": path
+            },
+            "hop_log": hop_log_data
+        }
