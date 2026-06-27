@@ -22,7 +22,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; }
+html, body { height: 100%;  overflow-y:auto;
+    overflow-x:hidden;}
 
 body {
   background: var(--bg);
@@ -34,7 +35,7 @@ body {
 /* ── STARFIELD ── */
 #starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 
-.app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height:100vh; }
 
 /* ── HEADER ── */
 header {
@@ -55,7 +56,7 @@ header {
 }
 .logo span { color: var(--muted); font-weight: 400; font-size: 10px; margin-left: 8px; letter-spacing: 0.1em; }
 .header-stats { margin-left: auto; display: flex; gap: 20px; align-items: center; }
-.hstat { display: flex; align-items: center; gap: 5px; font-size: 10px; color: var(--muted); }
+.hstat { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
 .hstat b { color: var(--cyan); font-family: 'Orbitron', sans-serif; font-size: 12px; }
 .dot-live { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.25} }
@@ -64,10 +65,10 @@ header {
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 290px 270px;
-  grid-template-rows: 1fr 160px;
+  grid-template-columns: 1fr 300px 300px;
+  grid-template-rows: 1fr 230px;
   gap: 0;
-  min-height: 0;
+  /* min-height: 0; */
 }
 
 .panel {
@@ -84,7 +85,7 @@ header {
   background: rgba(13,21,38,0.9);
   border-bottom: 1px solid var(--border);
   font-family: 'Orbitron', sans-serif;
-  font-size: 8px; font-weight: 700;
+  font-size: 10px; font-weight: 700;
   letter-spacing: 0.22em; color: var(--muted);
   text-transform: uppercase;
   display: flex; align-items: center; gap: 7px;
@@ -92,7 +93,7 @@ header {
 }
 .panel-hdr .accent { color: var(--cyan); font-size: 10px; }
 
-.panel-body { flex: 1; overflow: auto; padding: 11px; }
+.panel-body { flex: 1; overflow: auto; padding: 11px; font-size: 10px;;}
 .panel-body::-webkit-scrollbar { width: 3px; }
 .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
@@ -119,7 +120,7 @@ select, input[type="text"] {
 }
 select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgba(34,211,238,0.12); }
 .field { margin-bottom: 7px; }
-.field label { display: block; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
+.field label { display: block; font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 3px; }
 
 .btn { padding: 7px 10px; font-family: 'Orbitron', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.12em; cursor: pointer; border: none; border-radius: 4px; text-transform: uppercase; transition: all 0.15s; width: 100%; }
 .btn-cyan { background: var(--cyan); color: #000; }
@@ -134,7 +135,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 /* ── PLANET CARD ── */
 .planet-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 9px; margin-bottom: 7px; }
 .planet-card .pname { font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 12px; margin-bottom: 6px; }
-.kv { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.kv { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
 .kv .k { color: var(--muted); }
 .kv .v { color: var(--text); font-weight: 700; }
 .status-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 8px; padding: 2px 7px; border-radius: 10px; font-family: 'Orbitron', sans-serif; font-weight: 700; letter-spacing: 0.1em; }
@@ -143,7 +144,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
 /* ── LATENCY BARS ── */
 .lat-item { margin-bottom: 7px; }
-.lat-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 3px; }
+.lat-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; }
 .lat-label .lk { color: var(--muted); }
 .lat-label .lv { color: var(--text); font-weight: 700; }
 .bar-track { height: 5px; background: rgba(30,48,80,0.8); border-radius: 3px; overflow: hidden; }
@@ -219,11 +220,11 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
 
 /* ── CODEX ── */
 .codex-row { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 4px; }
-.codex-label { width: 52px; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
-.codex-val { flex: 1; font-size: 9px; color: var(--cyan); word-break: break-all; }
+.codex-label { width: 52px; font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; flex-shrink: 0; }
+.codex-val { flex: 1; font-size: 10px; color: var(--cyan); word-break: break-all; }
 .codex-arrow { color: var(--border); font-size: 12px; margin: 1px 0 1px 52px; }
 
-.empty { text-align: center; padding: 16px; color: var(--muted); font-size: 11px; }
+.empty { text-align: center; padding: 16px; color: var(--muted); font-size: 12px; }
 .empty .ico { font-size: 22px; margin-bottom: 6px; }
 
 /* ── LINK LABELS on SVG ── */
@@ -279,7 +280,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
         <div id="anim-status">
           <span id="anim-hop-label">HOP 1/1</span>
           <div id="anim-progress"><div id="anim-progress-fill"></div></div>
-          <span id="anim-ms-label" style="font-size:9px;color:var(--muted)"></span>
+          <span id="anim-ms-label" style="font-size:10px;color:var(--muted)"></span>
         </div>
 
         <div id="tx-error" style="color:var(--red);font-size:10px;margin-top:6px;display:none;"></div>
@@ -305,18 +306,18 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
       <div class="panel-hdr"><span class="accent">↝</span> HOP LOG</div>
       <div class="panel-body" id="hoplog-body">
         <div class="empty" style="padding:10px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>
-      </div>
+      </div>+
     </div>
 
   </div><!-- /main -->
 
   <!-- BOTTOM BAR: Codex | Chaos | Console -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:145px;flex-shrink:0;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:210px; font-size:10px;">
 
     <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:rgba(8,14,26,0.6);">
       <div class="panel-hdr"><span class="accent">⌬</span> CODEX TRANSLATION</div>
-      <div class="panel-body" id="codex-body" style="padding:7px 11px;">
-        <div class="empty" style="padding:4px;font-size:10px;">Send a packet to see encoding.</div>
+      <div class="panel-body" id="codex-body" style="padding:7px 11px; font-size:10px;">
+        <div class="empty" style="padding:4px;font-size:12px;">Send a packet to see encoding.</div>
       </div>
     </div>
 
@@ -324,21 +325,21 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
       <div class="panel-hdr"><span class="accent" style="color:var(--red);">⚡</span> CHAOS CONTROLS</div>
       <div id="chaos-content" style="padding:9px 11px;display:flex;flex-direction:column;gap:5px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;">
         <div class="chaos-row">
-          <button class="btn btn-red" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
-          <button class="btn btn-ghost" onclick="showChaos('revive-planet')">↑ REVIVE</button>
+          <button class="btn btn-red" style="font-size:11px;" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
+          <button class="btn btn-ghost" style="font-size:10px;" onclick="showChaos('revive-planet')">↑ REVIVE</button>
         </div>
         <div class="chaos-row">
-          <button class="btn btn-red" onclick="showChaos('kill-link')">✗ SEVER LINK</button>
-          <button class="btn btn-ghost" onclick="showChaos('revive-link')">✓ RESTORE</button>
+          <button class="btn btn-red" style="font-size:10px;" onclick="showChaos('kill-link')">✗ SEVER LINK</button>
+          <button class="btn btn-ghost" style="font-size:10px;" onclick="showChaos('revive-link')">✓ RESTORE</button>
         </div>
         <div id="chaos-sub" style="display:none;">
-          <div style="font-size:8px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;" id="chaos-lbl"></div>
+          <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;" id="chaos-lbl"></div>
           <div class="chaos-sel-row">
             <select id="chaos-select"></select>
             <button class="btn btn-ghost" style="width:auto;padding:5px 10px;" onclick="applyChaos()">OK</button>
           </div>
         </div>
-        <button class="btn btn-ghost" onclick="resetUniverse()" style="margin-top:auto;">↺ RESET UNIVERSE</button>
+        <button class="btn btn-ghost" onclick="resetUniverse()" style="margin-top:auto;font-size:10px;" >↺ RESET UNIVERSE</button>
       </div>
     </div>
 
@@ -686,8 +687,9 @@ function renderMap(){
         line.setAttribute('stroke-width','2.5');
         line.setAttribute('filter','url(#glow)');
       } else if(isCompletedHop){
-        line.setAttribute('stroke','rgba(34,197,94,0.55)');
-        line.setAttribute('stroke-width','2');
+        line.setAttribute('stroke','rgba(34,211,238,0.85)');
+        line.setAttribute('stroke-width','2.5');
+        line.setAttribute('filter','url(#glow)');
       } else if(inRoute){
         line.setAttribute('stroke','rgba(34,211,238,0.35)');
         line.setAttribute('stroke-width','1.5');
