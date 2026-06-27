@@ -307,7 +307,7 @@ class RoutingEngine:
                     "void_pure_ms": round(t_void_pure_ms, 4),
                     "atmosphere_dest_ms": round(t_atm_dest_ms, 4),
                     "total_void_ms": round(Tv_ms, 4),
-                    "fiber_dest_ms": round(Tp_dest_ms, 4),
+                    "fiber_dest_ms": round(Tp_dest_ms - m_dest * self.tower_delay, 4),
                     "hop_total_ms": round(hop_total, 4),
                 },
                 "void_distance_km": round(L, 2),
