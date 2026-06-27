@@ -1,6 +1,7 @@
 import math
 import heapq
 from typing import Dict, List, Optional, Set, Tuple, Any
+from core.latency import calc_fiber_transit_time, calc_void_travel_time
 
 PlanetId = str
 LinkId = Tuple[PlanetId, PlanetId]
@@ -119,24 +120,12 @@ class RoutingEngine:
                     best = (t1, t2)
         return best
 
-    def _fiber_arc_ms(self, planet_id: PlanetId, from_tower: int, to_tower: int) -> Tuple[float, int, int]:
-        p = self.planets[planet_id]
-        N = p["active_towers"]
-        r = p["radius_km"]
-
-        if from_tower == to_tower:
-            s = 0
-            m = 1
-        else:
-            diff = abs(from_tower - to_tower)
-            s = min(diff, N - diff)
-            m = s + 1
-
-        arc_km = 2 * math.pi * r * (s / N)
-        fiber_speed = self.fiber_fraction * self.c
-        Tp_ms = (arc_km / fiber_speed) * 1000.0 + m * self.tower_delay
-
-        return Tp_ms, s, m
+    def _fiber_arc_ms(self, planet_id: PlanetId, from_tower: int, to_tower: int):
+    planet = self._make_planet_obj(planet_id)
+    return calc_fiber_transit_time(
+        planet, from_tower, to_tower,
+        self.fiber_fraction, self.c, self.tower_delay
+    )
 
     def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
         p1, p2 = self.planets[current_id], self.planets[target_id]
