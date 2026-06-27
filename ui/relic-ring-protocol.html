@@ -60,6 +60,7 @@ header {
 .dot-live { width: 7px; height: 7px; background: var(--green); border-radius: 50%; box-shadow: 0 0 10px var(--green); animation: blink 2s infinite; }
 @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.25} }
 
+
 /* ── LAYOUT ── */
 .main {
   flex: 1;
@@ -92,7 +93,7 @@ header {
 }
 .panel-hdr .accent { color: var(--cyan); font-size: 12px; }
 
-.panel-body { flex: 1; overflow: auto; padding: 11px; }
+.panel-body { flex: 1; overflow: auto; padding: 11px; font-size: 10px;;}
 .panel-body::-webkit-scrollbar { width: 3px; }
 .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
@@ -279,7 +280,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
         <div id="anim-status">
           <span id="anim-hop-label">HOP 1/1</span>
           <div id="anim-progress"><div id="anim-progress-fill"></div></div>
-          <span id="anim-ms-label" style="font-size:9px;color:var(--muted)"></span>
+          <span id="anim-ms-label" style="font-size:10px;color:var(--muted)"></span>
         </div>
 
         <div id="tx-error" style="color:var(--red);font-size:12px;margin-top:6px;display:none;"></div>
@@ -305,7 +306,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
       <div class="panel-hdr"><span class="accent">↝</span> HOP LOG</div>
       <div class="panel-body" id="hoplog-body">
         <div class="empty" style="padding:10px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>
-      </div>
+      </div>+
     </div>
 
   </div><!-- /main -->
@@ -323,12 +324,12 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
       <div class="panel-hdr"><span class="accent" style="color:var(--red);">⚡</span> CHAOS CONTROLS</div>
       <div id="chaos-content" style="padding:9px 11px;display:flex;flex-direction:column;gap:5px;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;">
         <div class="chaos-row">
-          <button class="btn btn-red" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
-          <button class="btn btn-ghost" onclick="showChaos('revive-planet')">↑ REVIVE</button>
+          <button class="btn btn-red" style="font-size:11px;" onclick="showChaos('kill-planet')">☠ KILL PLANET</button>
+          <button class="btn btn-ghost" style="font-size:10px;" onclick="showChaos('revive-planet')">↑ REVIVE</button>
         </div>
         <div class="chaos-row">
-          <button class="btn btn-red" onclick="showChaos('kill-link')">✗ SEVER LINK</button>
-          <button class="btn btn-ghost" onclick="showChaos('revive-link')">✓ RESTORE</button>
+          <button class="btn btn-red" style="font-size:10px;" onclick="showChaos('kill-link')">✗ SEVER LINK</button>
+          <button class="btn btn-ghost" style="font-size:10px;" onclick="showChaos('revive-link')">✓ RESTORE</button>
         </div>
         <div id="chaos-sub" style="display:none;">
           <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;" id="chaos-lbl"></div>
@@ -337,7 +338,7 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
             <button class="btn btn-ghost" style="width:auto;padding:5px 10px;" onclick="applyChaos()">OK</button>
           </div>
         </div>
-        <button class="btn btn-ghost" onclick="resetUniverse()" style="margin-top:auto;">↺ RESET UNIVERSE</button>
+        <button class="btn btn-ghost" onclick="resetUniverse()" style="margin-top:auto;font-size:10px;" >↺ RESET UNIVERSE</button>
       </div>
     </div>
 
