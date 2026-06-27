@@ -2,8 +2,6 @@ import math
 import heapq
 from typing import Dict, List, Optional, Set, Tuple, Any
 
-from sklearn.metrics import f1_score
-
 PlanetId = str
 LinkId = Tuple[PlanetId, PlanetId]
 Milliseconds = float
@@ -232,7 +230,7 @@ class RoutingEngine:
         if not path or path[0] != origin:
             return None
 
-        final_latency = f1_score[destination] + self.tower_delay
+        final_latency = costs[destination] + self.tower_delay
         translated_payload = CodexTranscoder.encode_payload_for_planet(raw_message, self.planets[destination]["codex"])
 
         return {
@@ -246,9 +244,3 @@ class RoutingEngine:
             },
             "hop_log": self.reconstruct_hop_logs(path)
         }
-
-    def _heuristic(self, current_id: PlanetId, target_id: PlanetId) -> float:
-        p1, p2 = self.planets[current_id], self.planets[target_id]
-        dist = math.sqrt(((p2["x"] - p1["x"]) * self.scale_unit)**2 + ((p2["y"] - p1["y"]) * self.scale_unit)**2)
-        return (dist / self.c) * 1000.0
-    

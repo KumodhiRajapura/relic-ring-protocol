@@ -1,7 +1,7 @@
 import json
 import logging
 from typing import Dict, List, Optional, Set, Tuple, Any
-from routing import RoutingEngine, PlanetId, LinkId
+from .routing import RoutingEngine, PlanetId, LinkId
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("RelicRingNetwork")
