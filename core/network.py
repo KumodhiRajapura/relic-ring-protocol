@@ -1,8 +1,8 @@
-import json
 import logging
 from typing import Dict, Optional, Set, Any
 
 from .routing import RoutingEngine, PlanetId, LinkId
+from .universe import Universe
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("RelicRingNetwork")
@@ -22,11 +22,18 @@ class NetworkOrchestrator:
     def reload_universe_configuration(self) -> None:
         try:
             logger.info(f"Loading universe configuration from: {self.config_filepath}")
-            with open(self.config_filepath, "r") as file:
-                config_data = json.load(file)
 
-            self.raw_metadata = config_data["universe_metadata"]
-            self.planets_registry = {p["id"]: p for p in config_data["nodes"]}
+            universe = Universe(self.config_filepath)
+
+            self.raw_metadata = {
+                "speed_of_light_kms": universe.speed_of_light_kms,
+                "max_void_hop_distance_km": universe.max_void_hop_km,
+                "tower_processing_delay_ms": universe.tower_delay_ms,
+                "coordinate_scale_unit_km": universe.scale_km,
+                "fiber_speed_fraction": universe.fiber_speed_fraction,
+            }
+
+            self.planets_registry = {pid: p for pid, p in universe.planets.items()}
 
             self.active_planets = set(self.planets_registry.keys())
             self.disabled_links.clear()
