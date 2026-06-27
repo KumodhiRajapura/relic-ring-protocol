@@ -64,15 +64,18 @@ class RoutingEngine:
         dy = (p2["y"] - p1["y"]) * self.scale_unit
         center_dist = math.sqrt(dx * dx + dy * dy)
 
-        L = center_dist - (p1["radius_km"] + p1["atmosphere_thickness_km"]) \
-                        - (p2["radius_km"] + p2["atmosphere_thickness_km"])
+        L = center_dist \
+            - (p1["radius_km"] + p1["atmosphere_thickness_km"]) \
+            - (p2["radius_km"] + p2["atmosphere_thickness_km"])
 
         if L < 0 or L > self.l_max:
             return None
 
-        Tv_ms = ((p1["atmosphere_thickness_km"] * p1["refraction_index"])
-                 + (p2["atmosphere_thickness_km"] * p2["refraction_index"])
-                 + L) / self.c * 1000.0
+        Tv_ms = (
+            (p1["atmosphere_thickness_km"] * p1["refraction_index"])
+            + (p2["atmosphere_thickness_km"] * p2["refraction_index"])
+            + L
+        ) / self.c * 1000.0
 
         return Tv_ms
 
@@ -126,10 +129,14 @@ class RoutingEngine:
         dy = (p2["y"] - p1["y"]) * self.scale_unit
         return (math.sqrt(dx * dx + dy * dy) / self.c) * 1000.0
 
-    def find_route_astar(self, origin: PlanetId, destination: PlanetId,
-                         active_planets: Set[PlanetId],
-                         disabled_links: Set[LinkId],
-                         raw_message: str) -> Optional[Dict[str, Any]]:
+    def find_route_astar(
+        self,
+        origin: PlanetId,
+        destination: PlanetId,
+        active_planets: Set[PlanetId],
+        disabled_links: Set[LinkId],
+        raw_message: str
+    ) -> Optional[Dict[str, Any]]:
         if origin not in active_planets or destination not in active_planets:
             return None
 
@@ -164,10 +171,14 @@ class RoutingEngine:
 
         return self._build_packet(origin, destination, previous, raw_message)
 
-    def find_route_dijkstra(self, origin: PlanetId, destination: PlanetId,
-                             active_planets: Set[PlanetId],
-                             disabled_links: Set[LinkId],
-                             raw_message: str = "") -> Optional[Dict[str, Any]]:
+    def find_route_dijkstra(
+        self,
+        origin: PlanetId,
+        destination: PlanetId,
+        active_planets: Set[PlanetId],
+        disabled_links: Set[LinkId],
+        raw_message: str = ""
+    ) -> Optional[Dict[str, Any]]:
         if origin not in active_planets or destination not in active_planets:
             return None
 
@@ -196,9 +207,13 @@ class RoutingEngine:
 
         return self._build_packet(origin, destination, previous, raw_message)
 
-    def _build_packet(self, origin: PlanetId, destination: PlanetId,
-                      previous: Dict[PlanetId, Optional[PlanetId]],
-                      raw_message: str) -> Optional[Dict[str, Any]]:
+    def _build_packet(
+        self,
+        origin: PlanetId,
+        destination: PlanetId,
+        previous: Dict[PlanetId, Optional[PlanetId]],
+        raw_message: str
+    ) -> Optional[Dict[str, Any]]:
         path: List[PlanetId] = []
         step: Optional[PlanetId] = destination
         while step is not None:
@@ -226,10 +241,13 @@ class RoutingEngine:
             "hop_log": hop_log,
         }
 
-    def _reconstruct_hop_logs(self, path: List[PlanetId], raw_message: str) -> Tuple[List[Dict], float]:
+    def _reconstruct_hop_logs(
+        self,
+        path: List[PlanetId],
+        raw_message: str
+    ) -> Tuple[List[Dict], float]:
         hop_log = []
         total_ms = 0.0
-
         entry_tower: Dict[PlanetId, int] = {path[0]: 0}
 
         for i in range(len(path) - 1):
@@ -239,7 +257,6 @@ class RoutingEngine:
             next_planet = self.planets[next_id]
 
             send_t, recv_t = self._closest_tower_pair(curr_id, next_id)
-
             in_t = entry_tower.get(curr_id, 0)
             Tp_ms, s, m = self._fiber_arc_ms(curr_id, in_t, send_t)
 
@@ -248,18 +265,19 @@ class RoutingEngine:
             next_codex = next_planet["codex"]
             hop_payload = CodexTranscoder.encode_payload_for_planet(raw_message, next_codex)
 
-            h1, n1 = curr_planet["atmosphere_thickness_km"], curr_planet["refraction_index"]
-            h2, n2 = next_planet["atmosphere_thickness_km"], next_planet["refraction_index"]
+            h1 = curr_planet["atmosphere_thickness_km"]
+            n1 = curr_planet["refraction_index"]
+            h2 = next_planet["atmosphere_thickness_km"]
+            n2 = next_planet["refraction_index"]
 
             dx = (next_planet["x"] - curr_planet["x"]) * self.scale_unit
             dy = (next_planet["y"] - curr_planet["y"]) * self.scale_unit
             center_dist = math.sqrt(dx * dx + dy * dy)
-            L = center_dist - (curr_planet["radius_km"] + h1) - (next_planet["radius_km"] + h2)
-            L = max(L, 0.0)
+            L = max(center_dist - (curr_planet["radius_km"] + h1) - (next_planet["radius_km"] + h2), 0.0)
 
-            t_atmosphere_origin_ms = (h1 * n1 / self.c) * 1000.0
+            t_atm_origin_ms = (h1 * n1 / self.c) * 1000.0
             t_void_pure_ms = (L / self.c) * 1000.0
-            t_atmosphere_dest_ms = (h2 * n2 / self.c) * 1000.0
+            t_atm_dest_ms = (h2 * n2 / self.c) * 1000.0
 
             hop_total = Tp_ms + Tv_ms
             total_ms += hop_total
@@ -276,9 +294,9 @@ class RoutingEngine:
                     "tower_delay_ms": round(m * self.tower_delay, 4),
                     "towers_hit": m,
                     "segments_traversed": s,
-                    "atmosphere_origin_ms": round(t_atmosphere_origin_ms, 4),
+                    "atmosphere_origin_ms": round(t_atm_origin_ms, 4),
                     "void_pure_ms": round(t_void_pure_ms, 4),
-                    "atmosphere_dest_ms": round(t_atmosphere_dest_ms, 4),
+                    "atmosphere_dest_ms": round(t_atm_dest_ms, 4),
                     "total_void_ms": round(Tv_ms, 4),
                     "hop_total_ms": round(hop_total, 4),
                 },

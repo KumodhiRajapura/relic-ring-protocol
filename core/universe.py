@@ -1,7 +1,8 @@
 import json
 import math
+import os
 
-# TOWER CLASS
+
 class Tower:
     def __init__(self, index: int, planet):
         self.index = index
@@ -10,7 +11,6 @@ class Tower:
         n = planet.active_towers
         angle_deg = 90.0 - (360.0 / n) * index
         angle_rad = math.radians(angle_deg)
-
         surface = planet.radius_km + planet.atmosphere_thickness_km
 
         self.x = planet.x + surface * math.cos(angle_rad)
@@ -18,8 +18,8 @@ class Tower:
 
     def __repr__(self):
         return f"Tower(planet={self.planet.id}, index={self.index})"
-    
-# PLANET CLASS
+
+
 class Planet:
     def __init__(self, data: dict, scale_km: float):
         self.id = data["id"]
@@ -43,9 +43,14 @@ class Planet:
         return f"Planet({self.id}, codex={self.codex})"
 
 
-# UNIVERSE CLASS
 class Universe:
     def __init__(self, config_path: str):
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(
+                f"Universe config not found: '{config_path}'. "
+                f"Please provide a valid universe-config.json file."
+            )
+
         with open(config_path, "r") as f:
             config = json.load(f)
 
@@ -67,7 +72,7 @@ class Universe:
 
     def get_planet(self, planet_id: str) -> Planet:
         if planet_id not in self.planets:
-            raise ValueError(f"Planet '{planet_id}' not found.")
+            raise ValueError(f"Planet '{planet_id}' not found in universe.")
         return self.planets[planet_id]
 
     def all_planets(self) -> list[Planet]:

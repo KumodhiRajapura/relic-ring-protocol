@@ -1,10 +1,9 @@
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
-#hop entry
+
 @dataclass
 class HopEntry:
-
     hop_index: int
     tx_planet: str
     rx_planet: str
@@ -27,7 +26,6 @@ class HopEntry:
         }
 
 
-#packet
 @dataclass
 class Packet:
     origin_id: str
@@ -41,17 +39,14 @@ class Packet:
     route_taken: list[str] = field(default_factory=list)
 
     def append_hop(self, hop: HopEntry) -> None:
-        """Append a hop entry to the hop log."""
         self.hop_log.append(hop)
         self.total_latency_ms += hop.hop_latency_ms
 
     def mark_delivered(self) -> None:
-        """Mark packet as successfully delivered."""
         self.delivered = True
         self.current_id = self.destination_id
 
     def mark_undeliverable(self) -> None:
-        """Mark packet as undeliverable (no valid route)."""
         self.undeliverable = True
 
     def to_dict(self) -> dict:

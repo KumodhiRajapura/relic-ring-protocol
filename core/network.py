@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Dict, Optional, Set, Any
+
 from .routing import RoutingEngine, PlanetId, LinkId
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -8,7 +9,6 @@ logger = logging.getLogger("RelicRingNetwork")
 
 
 class NetworkOrchestrator:
-
     def __init__(self, config_filepath: str):
         self.config_filepath = config_filepath
         self.raw_metadata: Dict[str, Any] = {}
@@ -16,27 +16,26 @@ class NetworkOrchestrator:
         self.active_planets: Set[PlanetId] = set()
         self.disabled_links: Set[LinkId] = set()
         self.router: Optional[RoutingEngine] = None
-        
+
         self.reload_universe_configuration()
 
     def reload_universe_configuration(self) -> None:
         try:
-            logger.info(f"Ingesting topology schema configuration from: {self.config_filepath}")
+            logger.info(f"Loading universe configuration from: {self.config_filepath}")
             with open(self.config_filepath, "r") as file:
                 config_data = json.load(file)
 
-            # Updated perfectly to track the exact structure of your config variables
             self.raw_metadata = config_data["universe_metadata"]
             self.planets_registry = {p["id"]: p for p in config_data["nodes"]}
-            
+
             self.active_planets = set(self.planets_registry.keys())
             self.disabled_links.clear()
 
             self.router = RoutingEngine(self.planets_registry, self.raw_metadata)
-            logger.info("Core architecture system synchronization finalized successfully.")
+            logger.info("Universe loaded successfully.")
 
         except Exception as e:
-            logger.critical(f"Fatal infrastructure loading failure: {str(e)}")
+            logger.critical(f"Failed to load universe: {str(e)}")
             raise
 
     def set_planet_operational_status(self, planet_id: PlanetId, is_online: bool) -> bool:
@@ -58,15 +57,20 @@ class NetworkOrchestrator:
             self.disabled_links.add(link_tuple)
         return True
 
-    def process_transmission_transaction(self, origin: PlanetId, destination: PlanetId, 
-                                           raw_message: str) -> Optional[Dict[str, Any]]:
+    def process_transmission_transaction(
+        self,
+        origin: PlanetId,
+        destination: PlanetId,
+        raw_message: str
+    ) -> Optional[Dict[str, Any]]:
         if not self.router:
             return None
+
         if origin not in self.active_planets or destination not in self.active_planets:
-            logger.error(f"Transmission dropped: Terminal points offline ({origin} -> {destination})")
+            logger.error(f"Transmission dropped: planet offline ({origin} -> {destination})")
             return None
 
-        packet_receipt = self.router.find_route_astar(
+        packet = self.router.find_route_astar(
             origin=origin,
             destination=destination,
             active_planets=self.active_planets,
@@ -74,6 +78,12 @@ class NetworkOrchestrator:
             raw_message=raw_message
         )
 
-        if packet_receipt:
-            logger.info(f"Packet Delivered via {packet_receipt['meta_telemetry']['route_taken']} | Cost: {packet_receipt['meta_telemetry']['total_latency_ms']} ms")
-        return packet_receipt
+        if packet:
+            logger.info(
+                f"Packet delivered via {packet['meta_telemetry']['route_taken']} "
+                f"| Latency: {packet['meta_telemetry']['total_latency_ms']} ms"
+            )
+        else:
+            logger.warning(f"No route found: {origin} -> {destination}")
+
+        return packet
