@@ -22,7 +22,8 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; overflow: hidden; }
+html, body { height: 100%;  overflow-y:auto;
+    overflow-x:hidden;}
 
 body {
   background: var(--bg);
@@ -34,7 +35,7 @@ body {
 /* ── STARFIELD ── */
 #starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
 
-.app { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; }
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height:100vh; }
 
 /* ── HEADER ── */
 header {
@@ -67,7 +68,7 @@ header {
   grid-template-columns: 1fr 300px 300px;
   grid-template-rows: 1fr 230px;
   gap: 0;
-  min-height: 0;
+  /* min-height: 0; */
 }
 
 .panel {
@@ -305,13 +306,13 @@ select:focus, input:focus { border-color: var(--cyan); box-shadow: 0 0 0 2px rgb
       <div class="panel-hdr"><span class="accent">↝</span> HOP LOG</div>
       <div class="panel-body" id="hoplog-body">
         <div class="empty" style="padding:10px;"><div class="ico" style="font-size:16px;">📡</div>Awaiting transmission.</div>
-      </div>
+      </div>+
     </div>
 
   </div><!-- /main -->
 
   <!-- BOTTOM BAR: Codex | Chaos | Console -->
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:145px;flex-shrink:0;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);height:210px;">
 
     <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;background:rgba(8,14,26,0.6);">
       <div class="panel-hdr"><span class="accent">⌬</span> CODEX TRANSLATION</div>
